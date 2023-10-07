@@ -42,14 +42,10 @@ def get_answer(msgs: list, model, print_answer: bool = True) -> dict:
     return answer
 
 
-def print_history(history: list, i: int = None) -> None:
+def print_history(history: list) -> None:
     """Print chat history to console"""
-    i = -1 * int(i) if i else -1
-    try:
-        msg = history[i]
-    except IndexError:
-        return print(f"No chat history to print: {len(history)=}")
-    print(f"history[{i}]: {msg['content']}")
+    for i, msg in enumerate(history):
+        print(f"history[{len(history) - i}]: {msg['content']}")
 
 
 def save_msg(msg: str, path: str, filename: str = None) -> None:

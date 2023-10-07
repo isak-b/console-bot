@@ -18,6 +18,7 @@ from config import save_cfg, print_cfg
 class ChatBot(cmd.Cmd):
     intro = "Entering chat session: type '/h' for help, '/c' for commands, '/q' to quit"
     prompt = "> "
+    last_line = ""
 
     def __init__(self, cfg: dict = default_cfg):
         super().__init__()
@@ -54,19 +55,21 @@ class ChatBot(cmd.Cmd):
         return True
 
     def do_save(self, filename: str = None):
-        """Save the last answer to file: /save <filename>"""
-        if not self.chat_history:
-            history = self.chat_history
-            return print(f"No chat history to save: {len(history)=}")
-        msg = self.chat_history[-1]["content"]
-        save_msg(msg, path=self.cfg["dirs"]["saved"], filename=filename)
+        """Save the last line written in console to file: /save <filename: str>"""
+        save_msg(self.last_line, path=self.cfg["dirs"]["saved"], filename=filename)
 
     def do_history(self, i: int = None):
-        """Print chat history: /history <i>"""
-        print_history(self.chat_history, i=i)
+        """Print chat history: /history <i: int>"""
+        chat_history = self.chat_history or [{"content": "No chat history"}]
+        try:
+            chat_history = [chat_history[-1 * int(i)]] if i else chat_history
+        except IndexError:
+            return print(f"IndexError: index {i} out of range for {len(chat_history)=}")
+        self.last_line = chat_history[-1]["content"]
+        print_history(chat_history)
 
     def do_config(self, arg: str = None) -> None:
-        """Set config values: /config <key>=<value>"""
+        """Set config values: /config <key: str>=<value: str>"""
         if not arg:
             return print_cfg(self.cfg)
 
@@ -102,7 +105,7 @@ class ChatBot(cmd.Cmd):
     def do_commands(self, _arg):
         """View available commands: /commands, /c"""
         for func, aliases in self.commands.items():
-            print(f"/{func.__name__.split('_')[1]}: {aliases}")
+            print(f"{func.__name__.split('_')[1]}: {[f'/{a}' for a in aliases]}")
 
     def default(self, line):
         """Default cmdloop: Get question from user and answer from bot"""
@@ -110,3 +113,4 @@ class ChatBot(cmd.Cmd):
         msgs = get_msgs(self.chat_prompt, self.chat_history, question, history_size=self.cfg["history_size"])
         answer = get_answer(msgs, model=self.model)
         self.chat_history.extend([question, answer])
+        self.last_line = answer["content"]
