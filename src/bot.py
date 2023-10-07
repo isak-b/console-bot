@@ -1,6 +1,6 @@
 import cmd
 
-from api import set_api_key
+from model import get_model
 from messages import (
     load_prompt,
     load_history,
@@ -22,19 +22,18 @@ class ChatBot(cmd.Cmd):
     def __init__(self, cfg: dict = default_cfg):
         super().__init__()
         self.cfg = cfg
-        set_api_key(env_filename=self.cfg["files"]["env"])
+        self.model = get_model(model_name=self.cfg["model"], env_filename=self.cfg["files"]["env"])
         self.chat_prompt = load_prompt(path=self.cfg["dirs"]["prompt"], filename=f"{self.cfg['prompt']}.txt")
         self.chat_history = load_history(path=self.cfg["dirs"]["history"], filename=f"{self.cfg['history']}.json")
 
         # Add aliases for commands
         self.commands = {
-            ChatBot.do_quit: ["q", "quit", "exit"],
+            ChatBot.do_commands: ["c", "commands"],
             ChatBot.do_help: ["h", "help"],
             ChatBot.do_save: ["s", "save"],
-            ChatBot.do_history: ["hs", "history"],
-            ChatBot.do_change: ["ch", "change"],
             ChatBot.do_config: ["cfg", "config"],
-            ChatBot.do_commands: ["c", "commands"],
+            ChatBot.do_history: ["hs", "history"],
+            ChatBot.do_quit: ["q", "quit", "exit"],
         }
         for func, commands in self.commands.items():
             for command in commands:
@@ -66,8 +65,11 @@ class ChatBot(cmd.Cmd):
         """Print chat history: /history <i>"""
         print_history(self.chat_history, i=i)
 
-    def do_change(self, arg: str):
-        """Change config values: /change <key>=<value>"""
+    def do_config(self, arg: str = None) -> None:
+        """Set config values: /config <key>=<value>"""
+        if not arg:
+            return print_cfg(self.cfg)
+
         args = arg.split("=")
         key, value = args[0], args[1]
 
@@ -81,6 +83,8 @@ class ChatBot(cmd.Cmd):
                 self.chat_prompt = load_prompt(path=self.cfg["dirs"]["prompt"], filename=f"{value}.txt")
             elif key == "history":
                 self.chat_history = load_history(path=self.cfg["dirs"]["history"], filename=f"{value}.json")
+            elif key == "model":
+                self.model = get_model(model_name=value, env_filename=self.cfg["files"]["env"])
         except FileNotFoundError:
             return print(f"file '{self.cfg['paths'][key]}{value}.*' not found")
 
@@ -92,10 +96,7 @@ class ChatBot(cmd.Cmd):
 
         # Set new config value
         self.cfg[key] = value
-        print_cfg(self.cfg)
 
-    def do_config(self, _arg):
-        """View current config values: /config, /cfg"""
         print_cfg(self.cfg)
 
     def do_commands(self, _arg):
@@ -107,5 +108,5 @@ class ChatBot(cmd.Cmd):
         """Default cmdloop: Get question from user and answer from bot"""
         question = get_question(line)
         msgs = get_msgs(self.chat_prompt, self.chat_history, question, history_size=self.cfg["history_size"])
-        answer = get_answer(msgs)
+        answer = get_answer(msgs, model=self.model)
         self.chat_history.extend([question, answer])

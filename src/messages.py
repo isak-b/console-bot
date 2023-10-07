@@ -2,8 +2,6 @@ import os
 import json
 from colorama import Fore, Style
 
-from model import default_model
-
 ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 
 
@@ -36,7 +34,7 @@ def get_msgs(prompt: dict, history: list, question: dict, history_size: int = 10
     return msgs
 
 
-def get_answer(msgs: list, model=default_model, print_answer: bool = True) -> dict:
+def get_answer(msgs: list, model, print_answer: bool = True) -> dict:
     """Get answer from bot"""
     answer = model(messages=msgs).choices[0]["message"]
     if print_answer is True:
