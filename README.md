@@ -21,3 +21,47 @@ NOTE: Bind this to an alias (like 'chat') for easy access
 ```bash
 python path/to/src/
 ```
+
+# Chat commands
+
+Quit:
+```
+/quit
+```
+
+Get command description:
+```
+/help save
+```
+
+Get list of commands and their aliases:
+```
+/commands
+```
+
+Save last line:
+```
+/save
+```
+
+Print chat_history:
+```
+/history
+```
+
+Print specific message in chat_history:
+```
+/history 2
+```
+
+Save a specific message from chat_history:
+```
+/history 5
+/save
+```
+
+Change config values:
+```
+/config prompt=default
+```
+

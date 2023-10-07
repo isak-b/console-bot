@@ -55,7 +55,7 @@ class ChatBot(cmd.Cmd):
         return True
 
     def do_save(self, filename: str = None):
-        """Save the last line written in console to file: /save <filename: str>"""
+        """Save the last message written in console to file: /save <filename: str>"""
         save_msg(self.last_line, path=self.cfg["dirs"]["saved"], filename=filename)
 
     def do_history(self, i: int = None):
@@ -102,12 +102,12 @@ class ChatBot(cmd.Cmd):
 
         print_cfg(self.cfg)
 
-    def do_commands(self, _arg):
+    def do_commands(self, _arg) -> None:
         """View available commands: /commands, /c"""
         for func, aliases in self.commands.items():
             print(f"{func.__name__.split('_')[1]}: {[f'/{a}' for a in aliases]}")
 
-    def default(self, line):
+    def default(self, line) -> None:
         """Default cmdloop: Get question from user and answer from bot"""
         question = get_question(line)
         msgs = get_msgs(self.chat_prompt, self.chat_history, question, history_size=self.cfg["history_size"])
