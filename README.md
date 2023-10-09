@@ -1,35 +1,46 @@
-# About
+# About chat
 ChatGPT in your terminal!
 
 Author: Isak Barbopoulos (isak@xaros.org)
 
-# Install chat
-NOTE: You need python, pip and an OpenAI API key before you can install chat
+---
+
+<details>
+    <summary>Installation</summary><br>
+
+NOTE: You need python, pip and an OpenAI API key to run chat
 #### Open root folder in terminal and type:
 ```bash
 pip install .
 ```
 
-# Setup
 #### Create a file named '.env' in the root of this repo and add the following line:
 ```bash
 OPENAI_API_KEY=<your OpenAI API key here>
 ```
+</details>
 
-# Start chat
-NOTE: Bind this to an alias (like 'chat') for easy access
+<details>
+    <summary>Start a new chat</summary><br>
+
+Run `chat/src/__main/__.py` or type the following in your terminal:
 ```bash
-python path/to/src/
+python path/to/chat/src/
 ```
 
-# Chat commands
+TIP: Bind the above command to an alias (like 'chat') for easy access
+
+</details>
+
+<details>
+    <summary>Commands</summary><br>
 
 Quit:
 ```
 /quit
 ```
 
-Get command description:
+Get a description of a command:
 ```
 /help save
 ```
@@ -39,22 +50,23 @@ Get list of commands and their aliases:
 /commands
 ```
 
-Save last line:
+Save the last message to disk:
 ```
 /save
 ```
 
-Print chat_history:
+Print chat history:
 ```
 /history
 ```
 
-Print specific message in chat_history:
+Print a specific message from history:
+- NOTE: history counts backwards, so 1=last, 2=second to last, etc
 ```
 /history 2
 ```
 
-Save a specific message from chat_history:
+Save a specific message from history:
 ```
 /history 5
 /save
@@ -64,4 +76,4 @@ Change config values:
 ```
 /config prompt=default
 ```
-
+</details>

@@ -6,7 +6,7 @@ import pytest
 root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 sys.path.insert(0, root_path)
 
-from src.config import load_cfg
+from src.config import load_cfg  # noqa: E402
 
 test_cfg = load_cfg()
 
