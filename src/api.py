@@ -6,7 +6,7 @@ load_dotenv()
 ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 
 
-def _load_openai_api_key(env_filename: str) -> None:
+def load_openai_api_key(env_filename: str) -> None:
     """Load OpenAI API key from .env file"""
     path = ROOT_PATH + env_filename
     if os.path.exists(path) is False:
@@ -16,8 +16,3 @@ def _load_openai_api_key(env_filename: str) -> None:
 
     # Set API key
     openai.api_key = os.getenv("OPENAI_API_KEY")
-
-
-def set_api_key(model_name: str, env_filename: str) -> None:
-    if model_name in ["default", "gpt3_5", "gpt4"]:
-        _load_openai_api_key(env_filename=env_filename)
