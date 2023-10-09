@@ -1,8 +1,8 @@
 import os
 import yaml
 
-root_path = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/"
-cfg_path = os.path.join(root_path, "config.yaml")
+ROOT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + "/"
+cfg_path = os.path.join(ROOT_PATH, "config.yaml")
 
 
 def load_cfg(path: str = cfg_path) -> dict:

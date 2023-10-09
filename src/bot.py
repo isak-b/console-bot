@@ -1,7 +1,7 @@
 import cmd
 
-from src.model import get_model
-from src.messages import (
+from model import get_model
+from messages import (
     load_prompt,
     load_history,
     get_question,
@@ -11,7 +11,7 @@ from src.messages import (
     save_history,
     save_msg,
 )
-from src.config import load_cfg, save_cfg, print_cfg
+from config import load_cfg, save_cfg, print_cfg
 
 default_cfg = load_cfg()
 

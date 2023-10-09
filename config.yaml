@@ -7,6 +7,6 @@ files:
 history: chat01
 history_size: 10
 model: default
-prompt: default
+prompt: rick
 save_config_on_exit: true
 save_history_on_exit: true

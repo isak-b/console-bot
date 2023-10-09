@@ -9,5 +9,5 @@ setup(
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=requirements,
-    requires=["python (>=3.11)"],
+    requires=["python (>=3.9)"],
 )
