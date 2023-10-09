@@ -23,4 +23,4 @@ def test_config():
         with redirect_stdout(buffer):
             print_cfg(cfg)
         printed_value = buffer.getvalue()
-        assert printed_value == "key_a: val_a\n\n"
+        assert "key_a: val_a" in printed_value

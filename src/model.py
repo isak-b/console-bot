@@ -5,7 +5,14 @@ from api import set_api_key
 
 
 class MockModel:
-    choices: list = [{"message": {"content": "This is a mock reply. You can change model with /change model=default"}}]
+    choices: list = [
+        {
+            "message": {
+                "role": "assistant",
+                "content": "This is a mock reply. You can change to the default model with /config model=default",
+            }
+        }
+    ]
 
     def __call__(self, *_args, **_kwargs):
         return self

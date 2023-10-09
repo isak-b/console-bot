@@ -1,4 +1,5 @@
 import cmd
+from colorama import Fore, Style
 
 from model import get_model
 from messages import (
@@ -11,7 +12,7 @@ from messages import (
     save_history,
     save_msg,
 )
-from config import load_cfg, save_cfg, print_cfg
+from config import load_cfg, save_cfg, print_cfg, process_cfg_value
 
 default_cfg = load_cfg()
 
@@ -30,12 +31,13 @@ class ChatBot(cmd.Cmd):
 
         # Add aliases for commands
         self.commands = {
-            ChatBot.do_commands: ["c", "commands"],
             ChatBot.do_help: ["h", "help"],
-            ChatBot.do_save: ["s", "save"],
-            ChatBot.do_config: ["cfg", "config"],
-            ChatBot.do_history: ["hs", "history"],
             ChatBot.do_quit: ["q", "quit", "exit"],
+            ChatBot.do_save: ["s", "save"],
+            ChatBot.do_history: ["hs", "history"],
+            ChatBot.do_clear_history: ["ch", "clear_history"],
+            ChatBot.do_config: ["cfg", "config"],
+            ChatBot.do_commands: ["c", "commands"],
         }
         for func, commands in self.commands.items():
             for command in commands:
@@ -65,9 +67,16 @@ class ChatBot(cmd.Cmd):
         try:
             chat_history = [chat_history[-1 * int(i)]] if i else chat_history
         except IndexError:
-            return print(f"IndexError: index {i} out of range for {len(chat_history)=}")
+            return print(f"{Fore.RED}>> IndexError: index {i} out of range for {len(chat_history)=}{Style.RESET_ALL}")
         self.last_line = chat_history[-1]["content"]
         print_history(chat_history)
+
+    def do_clear_history(self, _arg):
+        """Clear chat history: /clear_history, /ch
+        NOTE: This does not automatically delete the history file, but the file may be deleted or overwritten on exit
+        """
+        self.chat_history = []
+        print(f"{Fore.RED}>> History cleared{Style.RESET_ALL}")
 
     def do_config(self, arg: str = None) -> None:
         """Set config values: /config <key: str>=<value: str>"""
@@ -76,12 +85,12 @@ class ChatBot(cmd.Cmd):
 
         args = arg.split("=")
         key, value = args[0], args[1]
+        value = process_cfg_value(value)
 
         # Key validation
         if key not in self.cfg:
-            print(f"{key=} not found in cfg:\n")
-            print_cfg(self.cfg)
-            return
+            print(f"{Fore.RED}>> {key=} not found in cfg:{Style.RESET_ALL}")
+            return print_cfg(self.cfg)
         try:
             if key == "prompt":
                 self.chat_prompt = load_prompt(path=self.cfg["dirs"]["prompt"], filename=f"{value}.txt")
@@ -90,23 +99,16 @@ class ChatBot(cmd.Cmd):
             elif key == "model":
                 self.model = get_model(model_name=value, env_filename=self.cfg["files"]["env"])
         except FileNotFoundError:
-            return print(f"file '{self.cfg['paths'][key]}{value}.*' not found")
-
-        # Value validation
-        if value.lower() in ["true", "false"]:
-            value = value.lower() == "true"
-        elif value.isdigit():
-            value = int(value)
+            return print(f"{Fore.RED}>> file '{self.cfg['paths'][key]}{value}.*' not found{Style.RESET_ALL}")
 
         # Set new config value
         self.cfg[key] = value
-
-        print_cfg(self.cfg)
+        print_cfg(self.cfg, highlight_key=key)
 
     def do_commands(self, _arg) -> None:
         """View available commands: /commands, /c"""
         for func, aliases in self.commands.items():
-            print(f"{func.__name__.split('_')[1]}: {[f'/{a}' for a in aliases]}")
+            print(f"{Fore.CYAN}>> {func.__name__.split('_')[1]}: {[f'/{a}' for a in aliases]}{Style.RESET_ALL}")
 
     def default(self, line) -> None:
         """Default cmdloop: Get question from user and answer from bot"""

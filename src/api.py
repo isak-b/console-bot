@@ -19,5 +19,5 @@ def _load_openai_api_key(env_filename: str) -> None:
 
 
 def set_api_key(model_name: str, env_filename: str) -> None:
-    if model_name in ["default", "gpt3_5_standard"]:
+    if model_name in ["default", "gpt3_5", "gpt4"]:
         _load_openai_api_key(env_filename=env_filename)

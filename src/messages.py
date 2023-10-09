@@ -38,14 +38,14 @@ def get_answer(msgs: list, model, print_answer: bool = True) -> dict:
     """Get answer from bot"""
     answer = model(messages=msgs).choices[0]["message"]
     if print_answer is True:
-        print(Fore.LIGHTBLUE_EX + "bot: " + answer["content"] + Style.RESET_ALL)
+        print(f"{Fore.CYAN}{Style.BRIGHT}>> {answer['content']}{Style.RESET_ALL}")
     return answer
 
 
 def print_history(history: list) -> None:
     """Print chat history to console"""
     for i, msg in enumerate(history):
-        print(f"history[{len(history) - i}]: {msg['content']}")
+        print(f"{Fore.LIGHTBLACK_EX}>> history[{len(history) - i}]: {msg['content']}{Style.RESET_ALL}")
 
 
 def save_msg(msg: str, path: str, filename: str = None) -> None:
@@ -67,11 +67,17 @@ def save_msg(msg: str, path: str, filename: str = None) -> None:
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
         f.write(msg)
-    print(f"Output saved to {output_path=}")
+    print(f"{Fore.GREEN}>> Output saved: {output_path}{Style.RESET_ALL}")
 
 
 def save_history(history: list, path: str, filename: str) -> None:
     """Save chat history to file"""
+    output_path = f"{ROOT_PATH}{path}{filename}"
     if history:
-        with open(ROOT_PATH + path + filename, "w") as f:
+        with open(output_path, "w") as f:
             json.dump(history, f)
+            print(f"{Fore.GREEN}>> History saved: {output_path}{Style.RESET_ALL}")
+    else:
+        if os.path.exists(output_path):
+            os.remove(output_path)
+            print(f"{Fore.RED}>> No history to save; file removed: {output_path}{Style.RESET_ALL}")
