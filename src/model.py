@@ -5,10 +5,11 @@ from api import load_openai_api_key
 
 
 class MockModel:
-    content = "This is a mock reply.\nYou can change to the default model with /config model=default"
-    choices: list = [{"message": {"role": "assistant", "content": content}}]
+    msg = "This is a mock reply. Change to the default model with /config model=default"
+    choices: list = [{"message": {"role": "assistant", "content": msg}}]
 
-    def __call__(self, *_args, **_kwargs):
+    def __call__(self, messages, *_args, **_kwargs):
+        self.choices = [{"message": {"role": "assistant", "content": f"{self.msg}.\nYou: {messages[-1]['content']}"}}]
         return self
 
 
