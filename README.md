@@ -74,6 +74,6 @@ Save a specific message from history:
 
 Change config values:
 ```
-/config prompt=default
+/config bot=default
 ```
 </details>

@@ -2,7 +2,7 @@ import io
 import tempfile
 from contextlib import redirect_stdout
 
-from src.config import save_cfg, load_cfg, print_cfg
+from src.config import save_cfg, load_cfg
 
 buffer = io.StringIO()
 
@@ -18,9 +18,3 @@ def test_config():
         # Test load_cfg
         loaded_cfg = load_cfg(temp_file_path)
         assert loaded_cfg == cfg
-
-        # Test print_cfg
-        with redirect_stdout(buffer):
-            print_cfg(cfg)
-        printed_value = buffer.getvalue()
-        assert "key_a: val_a" in printed_value

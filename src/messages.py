@@ -1,22 +1,22 @@
 import os
 import json
-from colorama import Fore, Style
+from prompt_toolkit import prompt
 
 ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
 
 
-def load_prompt(path: str, filename: str) -> dict:
-    """Load prompt from file"""
-    with open(ROOT_PATH + path + filename, "r") as f:
+def load_instruction(path: str) -> dict:
+    """Load instruction from file"""
+    with open(ROOT_PATH + path, "r") as f:
         content = f.read()
     return {"role": "system", "content": content}
 
 
-def load_history(path: str, filename: str) -> list:
+def load_history(path: str) -> list:
     """Load chat history from file"""
     result = []
-    if os.path.exists(ROOT_PATH + path + filename) is True:
-        with open(ROOT_PATH + path + filename, "r") as f:
+    if os.path.exists(ROOT_PATH + path) is True:
+        with open(ROOT_PATH + path, "r") as f:
             result = json.load(f)
     return result
 
@@ -27,25 +27,16 @@ def get_question(args: list) -> str:
     return {"role": "user", "content": content}
 
 
-def get_msgs(prompt: dict, history: list, question: dict, history_size: int = 10) -> list:
+def get_msgs(instruction: dict, history: list, question: dict, history_size: int = 10) -> list:
     """Get messages for bot to respond to"""
     history = history[-history_size:] if history_size else history
-    msgs = [prompt] + history + [question]
+    msgs = [instruction] + history + [question]
     return msgs
 
 
-def get_answer(msgs: list, model, print_answer: bool = True) -> dict:
+def get_answer(msgs: list, model) -> dict:
     """Get answer from bot"""
-    answer = model(messages=msgs).choices[0]["message"]
-    if print_answer is True:
-        print(f"{Fore.CYAN}{Style.BRIGHT}>> {answer['content']}{Style.RESET_ALL}")
-    return answer
-
-
-def print_history(history: list) -> None:
-    """Print chat history to console"""
-    for i, msg in enumerate(history):
-        print(f"{Fore.LIGHTBLACK_EX}>> history[{len(history) - i}]: {msg['content']}{Style.RESET_ALL}")
+    return model(messages=msgs).choices[0]["message"]
 
 
 def save_msg(msg: str, path: str, filename: str = None) -> None:
@@ -67,7 +58,7 @@ def save_msg(msg: str, path: str, filename: str = None) -> None:
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     with open(output_path, "w") as f:
         f.write(msg)
-    print(f"{Fore.GREEN}>> Output saved: {output_path}{Style.RESET_ALL}")
+    print(f">> saved message:\n  {msg=}\n  {output_path=}")
 
 
 def save_history(history: list, path: str, filename: str) -> None:
@@ -76,8 +67,6 @@ def save_history(history: list, path: str, filename: str) -> None:
     if history:
         with open(output_path, "w") as f:
             json.dump(history, f)
-            print(f"{Fore.GREEN}>> History saved: {output_path}{Style.RESET_ALL}")
+            print(f">> history saved: {output_path}")
     else:
-        if os.path.exists(output_path):
-            os.remove(output_path)
-            print(f"{Fore.RED}>> No history to save; file removed: {output_path}{Style.RESET_ALL}")
+        print(f">> no history to save, delete file manually if you want it removed: {output_path}")

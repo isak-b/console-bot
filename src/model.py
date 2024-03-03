@@ -5,11 +5,11 @@ from api import load_openai_api_key
 
 
 class MockModel:
-    msg = "This is a mock reply. Change to the default model with /config model=default"
+    msg = "This is just a mock reply (set model: /cfg model=default)"
     choices: list = [{"message": {"role": "assistant", "content": msg}}]
 
     def __call__(self, messages, *_args, **_kwargs):
-        self.choices = [{"message": {"role": "assistant", "content": f"{self.msg}.\nYou: {messages[-1]['content']}"}}]
+        self.choices = [{"message": {"role": "assistant", "content": f"{self.msg}. You: {messages[-1]['content']}"}}]
         return self
 
 
@@ -31,6 +31,6 @@ models = {
 
 def get_model(model_name: str, env_filename: str = None):
     model = models[model_name]
-    if model_name != "mock":
+    if model_name in ["gpt3.5", "gpt4"]:
         load_openai_api_key(env_filename=env_filename)
     return model
