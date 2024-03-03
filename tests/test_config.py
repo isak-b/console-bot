@@ -1,10 +1,6 @@
-import io
 import tempfile
-from contextlib import redirect_stdout
 
 from src.config import save_cfg, load_cfg
-
-buffer = io.StringIO()
 
 
 def test_config():

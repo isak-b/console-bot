@@ -1,7 +1,7 @@
+import os
 import functools
 import openai
-
-from api import load_openai_api_key
+from dotenv import load_dotenv
 
 
 class MockModel:
@@ -29,8 +29,10 @@ models = {
 }
 
 
-def get_model(model_name: str, env_filename: str = None):
+def get_model(model_name: str):
     model = models[model_name]
-    if model_name in ["gpt3.5", "gpt4"]:
-        load_openai_api_key(env_filename=env_filename)
+    if model_name in ["default", "gpt3.5", "gpt4"]:
+        if not openai.api_key:
+            load_dotenv()
+            openai.api_key = os.getenv("OPENAI_API_KEY")
     return model
