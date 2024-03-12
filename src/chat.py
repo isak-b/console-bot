@@ -34,7 +34,7 @@ class Chat:
         # user_commands = {func: ["alias1", "alias2"]}
         self.user_commands = {
             self.do_view_commands: ["commands", "cmds", "c"],
-            self.do_view_config: ["config", "cfg"],
+            self.do_set_config: ["config", "cfg"],
             self.do_save_message: ["save", "s"],
             self.do_view_history: ["history", "hs"],
             self.do_save_history: ["save_history", "save_hs"],
@@ -46,11 +46,13 @@ class Chat:
 
     def paste(self, user_input: str):
         """Adds pasted user_input to input_buffer"""
+        user_input = user_input.replace("<", "&lt;").replace(">", "&gt;")
         self.input_buffer += user_input
         print_formatted_text(HTML(f"<user>{self.user_prefix}\n{user_input}</user>".rstrip("\n")), style=self.style)
 
     def enter(self, user_input: str):
         """Adds user_input to input_buffer and sends it"""
+        user_input = user_input.replace("<", "&lt;").replace(">", "&gt;")
         self.input_buffer += user_input
         print_formatted_text(HTML(f"<user>{self.user_prefix} {user_input}</user>"), style=self.style)
 
@@ -58,7 +60,8 @@ class Chat:
         if self.input_buffer.startswith("/"):
             self.response = self.handle_command(self.input_buffer)
         else:
-            self.response = f"<bot>{self.bot_prefix} {self.bot.get_response(self.input_buffer)}</bot>"
+            self.response = self.bot.get_response(self.input_buffer).replace("<", "&lt;").replace(">", "&gt;")
+            self.response = f"<bot>{self.bot_prefix} {self.response}</bot>"
         print_formatted_text(HTML(self.response), style=self.style)
 
         # Clear input_buffer
@@ -68,7 +71,7 @@ class Chat:
         cmd, *args = cmd.lstrip("/").split(" ")
         if cmd in self.cmds:
             return self.cmds[cmd](args)
-        return f"<error>>> unrecognized command={cmd} ({args=})</error>"
+        return f"<error>unrecognized command={cmd} ({args=})</error>"
 
     def do_view_commands(self, _args):
         """View available commands: /commands, /c"""
@@ -79,14 +82,26 @@ class Chat:
             output += f"<b>{name:{width}}</b> : /{', /'.join(cmds)}\n"
         return output
 
-    def do_view_config(self, args: list) -> None:
-        """View config values: /config [key1, key2]"""
+    def do_set_config(self, args: list) -> None:
+        """Set config values: /config key=value"""
         options = {
             "model": list(self.bot.models),
             "bot": list(self.bot.bots),
-            "save_config_on_exit": [True, False],
-            "save_history_on_exit": [True, False],
+            "save_config_on_exit": ["true", "false"],
+            "save_history_on_exit": ["true", "false"],
         }
+        kwargs = {arg.split("=")[0]: arg.split("=")[1] for arg in args if "=" in arg}
+        for key, val in kwargs.items():
+            if key in ["dirs", "paths"]:
+                return f"<error>{key=} must be changed by editing the cfg file directly</error>"
+            if key in options and val not in options[key]:
+                return f"<error>'{val}' is not valid, use one of: {options[key]}</error>"
+            if isinstance(self.bot.cfg[key], bool):
+                val = val.lower() == "true"
+            elif isinstance(self.bot.cfg[key], int):
+                val = int(val)
+            self.bot.cfg[key] = val
+            args.append(key)
 
         # Print cfg
         if not args:
@@ -129,7 +144,7 @@ class Chat:
             try:
                 msgs.append(chat_history[i])
             except IndexError:
-                return f"<error>>> IndexError: index {i} out of range for {len(chat_history)=}</error>"
+                return f"<error>IndexError: index {i} out of range for {len(chat_history)=}</error>"
         self.response = msgs[-1]["content"]
 
         # Print history
