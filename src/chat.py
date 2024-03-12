@@ -73,8 +73,10 @@ class Chat:
     def do_view_commands(self, _args):
         """View available commands: /commands, /c"""
         output = ""
+        width = max([len(c) for c in list(self.cmds)])
         for func, cmds in self.user_commands.items():
-            output += f"<b>{func.__name__.replace('do_', '').replace('_', ' ')}:</b> /{', /'.join(cmds)}\n"
+            name = func.__name__.replace("do_", "").replace("_", " ")
+            output += f"<b>{name:{width}}</b> : /{', /'.join(cmds)}\n"
         return output
 
     def do_view_config(self, args: list) -> None:

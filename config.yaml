@@ -3,7 +3,7 @@ model: default
 history: chat01
 history_size: 25
 save_config_on_exit: true
-save_history_on_exit: true
+save_history_on_exit: false
 dirs:
   bots: bots/
   history: history/
