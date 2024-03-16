@@ -18,9 +18,9 @@ class ChatBot:
         question = {"role": "user", "content": user_input}
         msgs = self.get_msgs(question, history_size=self.cfg["history_size"])
         model = get_model(self.cfg["model"])
-        answer = model(messages=msgs).choices[0]["message"]
+        answer = model(messages=msgs).choices[0].message
         self.chat_history.extend([question, answer])
-        return answer["content"]
+        return answer.content
 
     def get_msgs(self, question: dict, history_size: int = 10) -> list:
         """Get messages for bot to respond to"""

@@ -1,7 +1,9 @@
 import os
 import functools
-import openai
+from openai import OpenAI
 from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class MockModel:
@@ -14,11 +16,11 @@ class MockModel:
 
 
 gpt3_5 = functools.partial(
-    openai.ChatCompletion.create,
+    OpenAI(api_key=os.getenv("OPENAI_API_KEY")).chat.completions.create,
     model="gpt-3.5-turbo",
 )
 gpt4 = functools.partial(
-    openai.ChatCompletion.create,
+    OpenAI(api_key=os.getenv("OPENAI_API_KEY")).chat.completions.create,
     model="gpt-4",
 )
 models = {
@@ -31,8 +33,4 @@ models = {
 
 def get_model(model_name: str):
     model = models[model_name]
-    if model_name in ["default", "gpt3.5", "gpt4"]:
-        if not openai.api_key:
-            load_dotenv()
-            openai.api_key = os.getenv("OPENAI_API_KEY")
     return model
