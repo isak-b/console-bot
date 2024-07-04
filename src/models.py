@@ -15,19 +15,23 @@ class MockModel:
         return self
 
 
-gpt3_5 = functools.partial(
+gpt_35 = functools.partial(
     OpenAI(api_key=os.getenv("OPENAI_API_KEY")).chat.completions.create,
     model="gpt-3.5-turbo",
 )
-gpt4 = functools.partial(
+gpt_4 = functools.partial(
     OpenAI(api_key=os.getenv("OPENAI_API_KEY")).chat.completions.create,
-    model="gpt-4",
+    model="gpt-4-turbo",
+)
+gpt_4o = functools.partial(
+    OpenAI(api_key=os.getenv("OPENAI_API_KEY")).chat.completions.create,
+    model="gpt-4o",
 )
 models = {
-    "default": gpt3_5,
+    "gpt-35": gpt_35,
+    "gpt-4": gpt_4,
+    "gpt-4o": gpt_4o,
     "mock": MockModel(),
-    "gpt3.5": gpt3_5,
-    "gpt4": gpt4,
 }
 
 

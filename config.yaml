@@ -1,5 +1,5 @@
 bot: default
-model: default
+model: gpt-35
 history: chat01
 history_size: 25
 save_config_on_exit: true
