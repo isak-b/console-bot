@@ -3,12 +3,17 @@ import sys
 
 import pytest
 
-root_path = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
-sys.path.insert(0, root_path)
+ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
+sys.path.insert(0, ROOT_PATH)
 
-from src.config import load_cfg  # noqa: E402
+from chat.utils import load_cfg  # noqa: E402
 
 test_cfg = load_cfg()
+
+
+@pytest.fixture(scope="session")
+def root_path():
+    return ROOT_PATH
 
 
 @pytest.fixture(scope="session")

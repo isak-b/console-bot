@@ -1,13 +1,8 @@
 bot: ConciseBot  # Current choices: ConciseBot, RickBot
-model: GPT-4o  # Current choices: MockModel, GPT-3.5, GPT-4, GPT-4o
-history: chat01
+model: gpt-4o  # e.g., gpt-3.5-turbo, gpt-4-turbo, gpt-4o, mock-model
 history_size: 25
-dirs:
+paths:  # Relative to the config.yaml file
   bots: bots/
-  history: history/
-  saved: saved/
-files:
-  env: .env
 avatars:
   user: 👤
   bot: 🤖

@@ -1,47 +1,24 @@
+import os
 import asyncio
+import yaml
 import random
-from halo import Halo
 
+from halo import Halo
 from textual.app import App, ComposeResult
 from textual.widget import Widget
-from textual.widgets import Footer, Input, Button, Select, Label, Static
+from textual.widgets import Header, Footer, Input, Button, Select, Static
 from textual.containers import ScrollableContainer, Horizontal
 from textual.binding import Binding
 from rich.markdown import Markdown
 
-from config import load_cfg
+from utils import load_cfg
 from bot import ChatBot
 
-spinner_msgs = [
-    "Simulating a progress bar...",
-    "Blink twice if you see errors... Just kidding, don't blink.",
-    "Calculating the meaning of life... might take a while.",
-    "Sure, let me just google that for you...",
-    "Hold tight, butter-bot is on a coffee break...",
-    "Converting nonsense into somewhat more understandable nonsense...",
-    "Attempting to give a damn... but failing... Loading anyway.",
-    "Oh look at the dancing pixels on the screen",
-    "Writing down the answer on a piece of paper...",
-    "Patience, young padawan. I'm faster than your ex texting back!",
-    "If this takes too long, blame it on the wifi or the squirrels.",
-    "Busy doing science-y stuff... not that you'd understand.",
-    "I'll be ready in a jiffy! Or a jiffy and a half. Who's counting?",
-    "Hold on, I'm just feeding my hamster.",
-    "Generating more loading messages...",
-    "Re-reading the question again...",
-    "Let me guess, you're in a hurry? Tough luck, kid!",
-    "Can't rush genius... or loading bars for that matter.",
-    "Like trying to explain quantum physics to a toddler.",
-    "Please wait while I pretend to load something for you...",
-    "I'm on it. Unlike you, I'm actually good at multitasking!",
-    "Just a second... or five... Just wait it out, alright?",
-    "It would probably be faster if you just google'd it, just saying...",
-    "Wait, you asked what?",
-]
+STATIC_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "static")
 
 
-class UserMessageBox(Widget):
-    """Message boxes for user questions"""
+class MessageBox(Widget):
+    """A message box for a question or answer"""
 
     def __init__(self, text: str, role: str, avatar: str) -> None:
         self.text = text
@@ -55,24 +32,15 @@ class UserMessageBox(Widget):
         yield Static(Markdown(self.text), shrink=True, classes=self.role)
 
 
-class BotMessageBox(Widget):
-    """Message boxes for bot answers"""
+class UserMessageBox(MessageBox): ...
 
-    def __init__(self, text: str, role: str, avatar: str) -> None:
-        self.text = text
-        self.role = role
-        self.avatar = avatar
-        super().__init__()
 
-    def compose(self) -> ComposeResult:
-        self.text = f"{self.avatar} {self.text}"
-        self.text = self.text.replace(f"{self.avatar} `", f"{self.avatar}\n`")
-        yield Static(Markdown(self.text), shrink=True, classes=self.role)
+class BotMessageBox(MessageBox): ...
 
 
 class Chat(App):
-    CSS_PATH = "static/styles.css"
-    TITLE = "Chat"
+    CSS_PATH = os.path.join(STATIC_DIR, "styles.css")
+    TITLE = "ConsoleBot"
     BINDINGS = [
         Binding("escape", "quit", "Quit", key_display="ESC"),
         Binding("ctrl+x", "clear", "Clear", key_display="ctrl+X"),
@@ -83,19 +51,19 @@ class Chat(App):
         self.cfg = load_cfg()
         self.bot = ChatBot(self.cfg)
         self.greeting = "How can I help you today?"
-        self.question_template = "{question}"  # f"{self.cfg['avatars']['user']} {{question}}"
-        self.answer_template = "{answer}"  # f"{self.cfg['avatars']['bot']} {{answer}}"
+        with open(os.path.join(STATIC_DIR, "spinner.yaml"), "r") as f:
+            self.spinner_msgs = yaml.safe_load(f)
 
     def compose(self) -> ComposeResult:
         """Composes the application's root widget"""
-        yield Label(id="info")
+        yield Header()
 
         # Menu
         with Horizontal(id="menu_box"):
             yield Select(
-                [(key, key) for key in self.bot.models],
+                [(key, key) for key in self.bot.chat_models],
                 value=self.cfg["model"],
-                prompt="select model",
+                prompt="select chat model",
                 id="select_model",
             )
             yield Select(
@@ -107,15 +75,13 @@ class Chat(App):
 
         # History box
         with ScrollableContainer(id="history_box"):
-            yield BotMessageBox(
-                self.answer_template.format(answer=self.greeting), role="answer", avatar=self.cfg["avatars"]["bot"]
-            )
+            yield BotMessageBox(self.greeting, role="answer", avatar=self.cfg["avatars"]["bot"])
 
         # User input
         with Horizontal(id="input_box"):
             yield Input(id="user_input")
 
-            # NOTE: send_button is currently disabled
+            # NOTE: send_button is currently disabled and hidden
             yield Button(label="", variant="default", id="send_button", disabled=True)
 
         yield Footer()
@@ -159,9 +125,7 @@ class Chat(App):
         self.toggle_widgets(user_input, send_button)
         self.query_one("#user_input", Input).focus()
         question = user_input.value
-        message_box = UserMessageBox(
-            self.question_template.format(question=question), "question", avatar=self.cfg["avatars"]["user"]
-        )
+        message_box = UserMessageBox(question, role="question", avatar=self.cfg["avatars"]["user"])
         history_box.mount(message_box)
         history_box.scroll_end(animate=False)
         with user_input.prevent(Input.Changed):
@@ -172,13 +136,11 @@ class Chat(App):
 
         # Bot answer
         # NOTE: Display spinner while waiting for response
-        spinner = Halo(text=random.choice(spinner_msgs), spinner="dots")
+        spinner = Halo(text=random.choice(self.spinner_msgs), spinner="dots")
         spinner.start()
-        answer = await self.bot.async_get_response(question.strip())
+        answer = await self.bot.async_chat(question.strip())
         spinner.stop()
-        history_box.mount(
-            BotMessageBox(self.answer_template.format(answer=answer), "answer", avatar=self.cfg["avatars"]["bot"])
-        )
+        history_box.mount(BotMessageBox(answer, role="answer", avatar=self.cfg["avatars"]["bot"]))
 
         self.toggle_widgets(user_input, send_button)
         history_box.scroll_end(animate=False)
