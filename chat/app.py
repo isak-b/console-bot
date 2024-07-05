@@ -20,15 +20,16 @@ STATIC_DIR = os.path.join(os.path.dirname(os.path.realpath(__file__)), "static")
 class MessageBox(Widget):
     """A message box for a question or answer"""
 
-    def __init__(self, text: str, role: str, avatar: str) -> None:
+    def __init__(self, text: str, role: str, avatar: str = None) -> None:
         self.text = text
         self.role = role
         self.avatar = avatar
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        self.text = f"{self.avatar} {self.text}"
-        self.text = self.text.replace(f"{self.avatar} `", f"{self.avatar}\n`")
+        if self.avatar:
+            self.text = f"{self.avatar} {self.text}"
+            self.text = self.text.replace(f"{self.avatar} `", f"{self.avatar}\n`")
         yield Static(Markdown(self.text), shrink=True, classes=self.role)
 
 
@@ -46,9 +47,9 @@ class ChatApp(App):
         Binding("ctrl+x", "clear", "Clear", key_display="ctrl+X"),
     ]
 
-    def __init__(self) -> None:
+    def __init__(self, cfg_path: str = None) -> None:
         super().__init__()
-        self.cfg = load_cfg()
+        self.cfg = load_cfg(cfg_path=cfg_path)
         self.bot = ChatBot(self.cfg)
         self.greeting = "How can I help you today?"
         with open(os.path.join(STATIC_DIR, "spinner.yaml"), "r") as f:
@@ -75,7 +76,8 @@ class ChatApp(App):
 
         # History box
         with ScrollableContainer(id="history_box"):
-            yield BotMessageBox(self.greeting, role="answer", avatar=self.cfg["avatars"]["bot"])
+            avatar = self.cfg.get("avatars", {}).get("bot")
+            yield BotMessageBox(self.greeting, role="answer", avatar=avatar)
 
         # User input
         with Horizontal(id="input_box"):
@@ -125,7 +127,8 @@ class ChatApp(App):
         self.toggle_widgets(user_input, send_button)
         self.query_one("#user_input", Input).focus()
         question = user_input.value
-        message_box = UserMessageBox(question, role="question", avatar=self.cfg["avatars"]["user"])
+        avatar = self.cfg.get("avatars", {}).get("user")
+        message_box = UserMessageBox(question, role="question", avatar=avatar)
         history_box.mount(message_box)
         history_box.scroll_end(animate=False)
         with user_input.prevent(Input.Changed):
@@ -140,7 +143,8 @@ class ChatApp(App):
         spinner.start()
         answer = await self.bot.async_chat(question.strip())
         spinner.stop()
-        history_box.mount(BotMessageBox(answer, role="answer", avatar=self.cfg["avatars"]["bot"]))
+        avatar = self.cfg.get("avatars", {}).get("bot")
+        history_box.mount(BotMessageBox(answer, role="answer", avatar=avatar))
 
         self.toggle_widgets(user_input, send_button)
         history_box.scroll_end(animate=False)

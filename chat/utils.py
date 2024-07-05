@@ -6,14 +6,18 @@ APP_PATH = os.path.dirname(os.path.realpath(__file__))
 DEFAULT_CFG_PATH = os.path.join(APP_PATH, "config.yaml")
 
 
-def load_cfg(cfg_path: str = DEFAULT_CFG_PATH, make_paths_absolute: bool = True) -> dict:
+def load_cfg(cfg_path: str = None, make_paths_absolute: bool = True) -> dict:
     """Load config from file"""
+    cfg_path = cfg_path or DEFAULT_CFG_PATH
     with open(cfg_path, "r") as f:
         cfg = yaml.safe_load(f)
     cfg["paths"]["config_dir"] = os.path.dirname(cfg_path)
-    if make_paths_absolute is True:
-        for dir_name, dir_path in cfg["paths"].items():
+
+    # Make paths absolute
+    for dir_name, dir_path in cfg["paths"].items():
+        if make_paths_absolute is True and dir_path.startswith("/") is False:
             cfg["paths"][dir_name] = os.path.join(cfg["paths"]["config_dir"], dir_path)
+
     return cfg
 
 

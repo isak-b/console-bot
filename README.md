@@ -5,7 +5,7 @@ This is a Command Line Interface (CLI) that allows you to chat with ChatGPT in y
 
 **Author**: Isak Barbopoulos (isak@xaros.org)
 
-### Example usage
+### Usage
 
 You can either open an interactive chat interface that runs in your terminal (built with the [textual](https://textual.textualize.io/) library for Python):
 
@@ -39,7 +39,6 @@ pip install .
 ```bash
 OPENAI_API_KEY=<your OpenAI API key here>
 ```
-</details>
 
 </details>
 
@@ -75,12 +74,33 @@ TIP: Bind the command to an alias (like 'ask') and store it in .bashrc or .zshrc
 alias ask='python ~/path/to/console-bot/ask'
 ```
 
+</details>
+
 <details>
-    <summary>Create new bots</summary><br>
+    <summary>Create and load non-default config files</summary><br>
 
-Write your custom instructions in a .txt file and save it in `console-bot/chat/bots/`, and it will become automatically available in the app. 
+You can create your own config.yaml files and use them with either interface. Just point to the config file that you wish use:
 
-Note that the "ask" version of ConsoleBot has its own bots directory (`console-bot/ask/bots`), so if you wish to add/modify its instructions you'd have to add the instructions to that folder and then enter the name of the bot (i.e., the filename minus the file extension, so e.g., "AskBot" for "AskBot.txt") at the "bot" key in `console-bot/ask/config-yaml`.
+Chat:
+```bash
+python chat "path/to/config.yaml"
+```
+
+Ask:
+```bash
+python ask "Some question" "path/to/config.yaml"
+```
+
+</details>
+
+<details>
+    <summary>Modify or create custom bot instructions</summary><br>
+
+Write custom instructions in a .txt file and save it in `console-bot/chat/bots/`, and it will become automatically available as a bot in the app. You can set a default bot that will be pre-selected when the app starts by changing the "bot" value in `console-bot/chat/config.yaml` to e.g., "NewBot" if the .txt file is called `NewBot.txt`.
+
+For the ask version of ConsoleBot, instead add your bots to `console-bot/ask/bots/`. Note that since the "ask" interface isn't interactive, you must set the bot you want to use in `console-bot/ask/config.yaml` or it will have no effect.
+
+Note that the paths to the bots folder is relative to the config.yaml file. So you can also for example access the bots of the chat version by changing paths.bots to "../chat/bots/" (or any other folder where you might have bots).
 
 </details>
 

@@ -1,5 +1,8 @@
 bot: AskBot  # Current choices: AskBot
 model: gpt-4o  # e.g., gpt-3.5-turbo, gpt-4-turbo, gpt-4o, mock-model
 history_size: 1
-paths:  # Relative to this config.yaml file
+paths:  
+  # Paths that start with "/" are absolute
+  # If a path doesn't start with "/", then it is relative to this config.yaml file
+  # You can e.g., access the bots of the chat directory by changing the relative path to "../chat/bots/"
   bots: bots/
