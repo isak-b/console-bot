@@ -1,12 +1,13 @@
-bot: default
-model: gpt-35
+bot: ConciseBot  # Current choices: ConciseBot, RickBot
+model: GPT-4o  # Current choices: MockModel, GPT-3.5, GPT-4, GPT-4o
 history: chat01
 history_size: 25
-save_config_on_exit: true
-save_history_on_exit: false
 dirs:
   bots: bots/
   history: history/
   saved: saved/
 files:
   env: .env
+avatars:
+  user: 👤
+  bot: 🤖

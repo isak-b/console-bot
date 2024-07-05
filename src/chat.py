@@ -1,207 +1,181 @@
-import os
-import json
-from prompt_toolkit import prompt
-from prompt_toolkit.patch_stdout import patch_stdout
-from prompt_toolkit.history import InMemoryHistory
-from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
-from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.keys import Keys
-from prompt_toolkit import print_formatted_text, HTML
-from prompt_toolkit.styles import Style
+import asyncio
+import random
+import textwrap
+import shutil
+from halo import Halo
 
+from textual.app import App, ComposeResult
+from textual.widget import Widget
+from textual.widgets import Footer, Input, Button, Static, Select, Label
+from textual.containers import ScrollableContainer, Horizontal
+from textual.binding import Binding
+
+from config import load_cfg
 from bot import ChatBot
-from config import load_cfg, save_cfg, get_formatted_cfg
 
-ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
+spinner_msgs = [
+    "Simulating a progress bar...",
+    "Blink twice if you see errors... Just kidding, don't blink.",
+    "Calculating the meaning of life... might take a while.",
+    "Sure, let me just google that for you...",
+    "Hold tight, butter-bot is on a coffee break...",
+    "Converting nonsense into somewhat more understandable nonsense...",
+    "Attempting to give a damn... but failing... Loading anyway.",
+    "Oh look at the dancing pixels on the screen",
+    "Writing down the answer on a piece of paper...",
+    "Patience, young padawan. I'm faster than your ex texting back!",
+    "If this takes too long, blame it on the wifi or the squirrels.",
+    "Busy doing science-y stuff... not that you'd understand.",
+    "I'll be ready in a jiffy! Or a jiffy and a half. Who's counting?",
+    "Hold on, I'm just feeding my hamster.",
+    "Generating more loading messages...",
+    "Re-reading the question again...",
+    "Let me guess, you're in a hurry? Tough luck, kid!",
+    "Can't rush genius... or loading bars for that matter.",
+    "Like trying to explain quantum physics to a toddler.",
+    "Please wait while I pretend to load something for you...",
+    "I'm on it. Unlike you, I'm actually good at multitasking!",
+    "Just a second... or five... Just wait it out, alright?",
+    "It would probably be faster if you just google'd it, just saying...",
+    "Wait, you asked what?",
+]
 
-style = {
-    "user": "",
-    "bot": "#00ADB2",
-    "error": "ansired",
-}
+
+class UserMessageBox(Widget):
+    """Message boxes for user questions"""
+
+    def __init__(self, text: str, role: str) -> None:
+        self.text = text
+        self.role = role
+        super().__init__()
+
+    def compose(self) -> ComposeResult:
+        yield Static(self.text, classes=f"message {self.role}")
 
 
-class Chat:
-    def __init__(self, cfg: dict = load_cfg()):
-        self.intro = "Entering chat session - see commands: '/commands'"
-        self.bot = ChatBot(cfg=cfg)
-        self.style = Style.from_dict(style)
-        self.user_prefix = ">"
-        self.bot_prefix = ">>"
-        self.input_buffer = ""
-        self.response = ""
+class BotMessageBox(Widget):
+    """Message boxes for bot answers"""
 
-        # user_commands = {func: ["alias1", "alias2"]}
-        self.user_commands = {
-            self.do_view_commands: ["commands", "cmds", "c"],
-            self.do_set_config: ["config", "cfg"],
-            self.do_save_message: ["save", "s"],
-            self.do_view_history: ["history", "hs"],
-            self.do_save_history: ["save_history", "save_hs"],
-            self.do_clear_history: ["clear_history", "clear_hs"],
-            self.do_quit: ["quit", "q", "exit"],
-        }
-        # cmds = {"alias1": func, "alias2": func}
-        self.cmds = {cmd: func for func, cmds in self.user_commands.items() for cmd in cmds}
+    def __init__(self, text: str, role: str) -> None:
+        self.text = text
+        self.role = role
+        super().__init__()
 
-    def paste(self, user_input: str):
-        """Adds pasted user_input to input_buffer"""
-        user_input = user_input.replace("<", "&lt;").replace(">", "&gt;")
-        self.input_buffer += user_input
-        print_formatted_text(HTML(f"<user>{self.user_prefix}\n{user_input}</user>".rstrip("\n")), style=self.style)
+    def compose(self) -> ComposeResult:
+        yield Static(self.text, classes=f"message {self.role}")
 
-    def enter(self, user_input: str):
-        """Adds user_input to input_buffer and sends it"""
-        user_input = user_input.replace("<", "&lt;").replace(">", "&gt;")
-        self.input_buffer += user_input
-        print_formatted_text(HTML(f"<user>{self.user_prefix} {user_input}</user>"), style=self.style)
 
-        # Check if command
-        if self.input_buffer.startswith("/"):
-            self.response = self.handle_command(self.input_buffer)
-        else:
-            self.response = self.bot.get_response(self.input_buffer).replace("<", "&lt;").replace(">", "&gt;")
-            self.response = f"<bot>{self.bot_prefix} {self.response}</bot>"
-        print_formatted_text(HTML(self.response), style=self.style)
+class Chat(App):
+    CSS_PATH = "static/styles.css"
+    TITLE = "Chat"
+    BINDINGS = [
+        Binding("escape", "quit", "Quit", key_display="ESC"),
+        Binding("ctrl+x", "clear", "Clear", key_display="ctrl+X"),
+    ]
 
-        # Clear input_buffer
-        self.input_buffer = ""
+    def __init__(self) -> None:
+        super().__init__()
+        self.cfg = load_cfg()
+        self.bot = ChatBot(self.cfg)
+        self.greeting = "How can I help you today?"
+        self.question_template = f"{self.cfg['avatars']['user']} {{question}}"
+        self.answer_template = f"{self.cfg['avatars']['bot']} {{answer}}"
 
-    def handle_command(self, cmd) -> str:
-        cmd, *args = cmd.lstrip("/").split(" ")
-        if cmd in self.cmds:
-            return self.cmds[cmd](args)
-        return f"<error>unrecognized command={cmd} ({args=})</error>"
+    def compose(self) -> ComposeResult:
+        """Composes the application's root widget"""
+        yield Label(id="info")
 
-    def do_view_commands(self, _args):
-        """View available commands: /commands, /c"""
-        output = ""
-        width = max([len(c) for c in list(self.cmds)])
-        for func, cmds in self.user_commands.items():
-            name = func.__name__.replace("do_", "").replace("_", " ")
-            output += f"<b>{name:{width}}</b> : /{', /'.join(cmds)}\n"
-        return output
+        # Menu
+        with Horizontal(id="menu_box"):
+            yield Select(
+                [(key, key) for key in self.bot.models],
+                value=self.cfg["model"],
+                prompt="select model",
+                id="select_model",
+            )
+            yield Select(
+                [(key, key) for key in self.bot.bots],
+                value=self.cfg["bot"],
+                prompt="select bot",
+                id="select_bot",
+            )
 
-    def do_set_config(self, args: list) -> None:
-        """Set config values: /config key=value"""
-        options = {
-            "model": list(self.bot.models),
-            "bot": list(self.bot.bots),
-            "save_config_on_exit": ["true", "false"],
-            "save_history_on_exit": ["true", "false"],
-        }
-        kwargs = {arg.split("=")[0]: arg.split("=")[1] for arg in args if "=" in arg}
-        for key, val in kwargs.items():
-            if key in ["dirs", "paths"]:
-                return f"<error>{key=} must be changed by editing the cfg file directly</error>"
-            if key in options and val not in options[key]:
-                return f"<error>'{val}' is not valid, use one of: {options[key]}</error>"
-            if isinstance(self.bot.cfg[key], bool):
-                val = val.lower() == "true"
-            elif isinstance(self.bot.cfg[key], int):
-                val = int(val)
-            self.bot.cfg[key] = val
-            args.append(key)
+        # History box
+        with ScrollableContainer(id="history_box"):
+            yield BotMessageBox(self.answer_template.format(answer=self.greeting), role="answer")
 
-        # Print cfg
-        if not args:
-            return get_formatted_cfg(self.bot.cfg, options=options)
-        return get_formatted_cfg(self.bot.cfg, options=options, highlight_keys=args)
+        # User input
+        with Horizontal(id="input_box"):
+            yield Input(id="user_input")
 
-    def do_save_message(self, args: list) -> None:
-        """Save the last message written in console to file: /save <filename>"""
-        if not self.response:
-            return f">> no response to save: {self.response=}"
-        filename = args[0] if len(args) > 0 else None
-        path = self.bot.cfg["dirs"]["saved"]
+            # NOTE: send_button is currently disabled
+            yield Button(label="", variant="default", id="send_button", disabled=True)
 
-        if not filename:
-            files = os.listdir(ROOT_PATH + path)
-            max_num = 0
-            for file in files:
-                if file.startswith("output_"):
-                    try:
-                        num = int(file.split("_")[1].split(".")[0])
-                    except ValueError:
-                        continue
-                    max_num = max(num, max_num)
-            new_num = max_num + 1
-            filename = f"output_{str(new_num).zfill(3)}.txt"
+        yield Footer()
 
-        output_path = f"{ROOT_PATH}{path}{filename}"
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        with open(output_path, "w") as f:
-            f.write(self.response)
-        return f"saved message:\n  {self.response=}\n  {output_path=}"
+    async def on_mount(self) -> None:
+        """Triggered when the app is mounted"""
+        self.query_one("#user_input", Input).focus()
 
-    def do_view_history(self, args: list):
-        """Print chat history: /history <i: int>"""
-        chat_history = self.bot.chat_history or [{"content": "No chat history"}]
-        args = range(len(chat_history)) if len(args) == 0 else args
-        msgs = []
-        args = [int(i) for i in args]
-        for i in args:
-            try:
-                msgs.append(chat_history[i])
-            except IndexError:
-                return f"<error>IndexError: index {i} out of range for {len(chat_history)=}</error>"
-        self.response = msgs[-1]["content"]
+    def on_select_changed(self, event: Select.Changed) -> None:
+        """Triggered when a Select widget is changed. Get id of the changed widget with `event.select.id`"""
+        if event.select.id == "select_model":
+            self.cfg["model"] = event.value
+        elif event.select.id == "select_bot":
+            self.cfg["bot"] = event.value
 
-        # Print history
-        args = [i for i in range(len(msgs))] if len(args) == 0 else args
-        output = ""
-        for i, msg in zip(args, msgs):
-            i = len(chat_history) + i if i < 0 else i
-            output += f"<b>history[{i}]</b>: {msg['content']}\n"
-        return output
+    def action_clear(self) -> None:
+        """Triggered when the clear command is entered. Clears history box and creates new bot instance."""
+        self.bot = ChatBot(self.cfg)
+        history_box = self.query_one("#history_box")
+        history_box.remove()
+        self.mount(ScrollableContainer(id="history_box"))
 
-    def do_clear_history(self, _args):
-        """Clear chat history: /clear_history, /ch"""
-        self.bot.chat_history = []
-        return f"history cleared: {self.bot.chat_history=}"
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Triggered when a Button is pressed. Get id with: `event.button.id`"""
+        if event.button.id == "send_button":
+            # NOTE: send_button is currently disabled and hidden
+            await self.handle_messages()
 
-    def do_save_history(self, args: list = []):
-        """Save chat history to file"""
-        history = self.bot.chat_history
-        path = ROOT_PATH + self.bot.cfg["dirs"]["history"]
-        filename = args[0] if len(args) > 0 else f"{self.bot.cfg['history']}.json"
-        output_path = f"{path}{filename}"
-        if history:
-            with open(output_path, "w") as f:
-                json.dump(history, f)
-                return f"history saved: {output_path}"
-        return f"no history to save, delete file manually if you want it removed: {output_path}"
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Triggered when Input is submitted. Get id with: `event.input.id`"""
+        if event.input.id == "user_input":
+            await self.handle_messages()
 
-    def do_quit(self, _args):
-        """Quit chat session: /q, /quit, /exit"""
-        if self.bot.cfg["save_history_on_exit"] is True:
-            self.do_save_history()
-        if self.bot.cfg["save_config_on_exit"] is True:
-            save_cfg(self.bot.cfg)
-        exit()
+    async def handle_messages(self) -> None:
+        """Handles and displays user questions and bot responses"""
+        send_button = self.query_one("#send_button")
+        history_box = self.query_one("#history_box")
+        terminal_width, _ = shutil.get_terminal_size()
+        terminal_width *= 0.8
 
-    def start(self):
-        """Start chat session"""
-        print(self.intro)
-        kb = KeyBindings()
-        terminal_history = InMemoryHistory()
+        # User question
+        user_input = self.query_one("#user_input", Input)
+        self.toggle_widgets(user_input, send_button)
+        self.query_one("#user_input", Input).focus()
+        question = user_input.value
+        question = textwrap.fill(question, width=terminal_width)
+        message_box = UserMessageBox(self.question_template.format(question=question), "question")
+        history_box.mount(message_box)
+        history_box.scroll_end(animate=False)
+        with user_input.prevent(Input.Changed):
+            user_input.value = ""
 
-        @kb.add(Keys.Enter)
-        def _(event):
-            user_input = event.current_buffer.document.text
-            event.current_buffer.document = event.current_buffer.document.__class__()
-            self.enter(user_input)
+        # Wait for user question to be posted before getting bot answer
+        await asyncio.sleep(0.1)
 
-        @kb.add(Keys.BracketedPaste)
-        def _(event):
-            user_input = "\n".join(event.data.split("\r"))
-            self.paste(user_input)
+        # Bot answer
+        # NOTE: Display spinner while waiting for response
+        spinner = Halo(text=random.choice(spinner_msgs), spinner="dots")
+        spinner.start()
+        answer = await self.bot.async_get_response(message_box.text)
+        spinner.stop()
+        answer = textwrap.fill(answer, width=terminal_width)
+        history_box.mount(BotMessageBox(self.answer_template.format(answer=answer), "answer"))
 
-        with patch_stdout():
-            while True:
-                prompt(
-                    f"{self.user_prefix} ",
-                    key_bindings=kb,
-                    history=terminal_history,
-                    auto_suggest=AutoSuggestFromHistory(),
-                )
+        self.toggle_widgets(user_input, send_button)
+        history_box.scroll_end(animate=False)
+
+    def toggle_widgets(self, *widgets: Widget) -> None:
+        for w in widgets:
+            w.disabled = not w.disabled

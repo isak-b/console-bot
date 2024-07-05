@@ -15,12 +15,17 @@ class ChatBot:
         self.chat_history = self.load_history()
 
     def get_response(self, user_input: str) -> str:
+        """Sends user_input to the bot, and then adds the response msg to chat_history and returns the answer as str"""
         question = {"role": "user", "content": user_input}
         msgs = self.get_msgs(question, history_size=self.cfg["history_size"])
         model = get_model(self.cfg["model"])
-        answer = model(messages=msgs).choices[0].message
+        answer = {"role": "assistant", "content": model(messages=msgs).choices[0].message.content}
         self.chat_history.extend([question, answer])
-        return answer.content
+        return answer["content"]
+
+    async def async_get_response(self, *args, **kwargs) -> str:
+        """Asynchronous version of get_response()."""
+        return self.get_response(*args, **kwargs)
 
     def get_msgs(self, question: dict, history_size: int = 10) -> list:
         """Get messages for bot to respond to"""

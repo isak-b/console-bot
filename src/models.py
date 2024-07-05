@@ -7,11 +7,25 @@ load_dotenv()
 
 
 class MockModel:
-    msg = "This is just a mock reply (set model: /cfg model=default)"
-    choices: list = [{"message": {"role": "assistant", "content": msg}}]
+    """Mock model for testing purposes, it doesn't use up API tokens."""
 
-    def __call__(self, messages, *_args, **_kwargs):
-        self.choices = [{"message": {"role": "assistant", "content": f"{self.msg}. You: {messages[-1]['content']}"}}]
+    class Message:
+        def __init__(self, role, content):
+            self.role = role
+            self.content = content
+
+    class Choice:
+        def __init__(self, message):
+            self.message = message
+
+    def __init__(self):
+        self.content = "This is just a mock reply"
+        self.choices = [self.Choice(self.Message(role="assistant", content=self.content))]
+
+    def __call__(self, *_args, **_kwargs):
+        import time
+
+        time.sleep(1.5)
         return self
 
 
@@ -28,13 +42,14 @@ gpt_4o = functools.partial(
     model="gpt-4o",
 )
 models = {
-    "gpt-35": gpt_35,
-    "gpt-4": gpt_4,
-    "gpt-4o": gpt_4o,
-    "mock": MockModel(),
+    "GPT-3.5": gpt_35,
+    "GPT-4": gpt_4,
+    "GPT-4o": gpt_4o,
+    "MockModel": MockModel(),
 }
 
 
 def get_model(model_name: str):
+    """Get model object by name"""
     model = models[model_name]
     return model

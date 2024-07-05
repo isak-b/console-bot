@@ -1,6 +1,10 @@
+from dotenv import load_dotenv
+
 from chat import Chat
+
+load_dotenv()
 
 
 if __name__ == "__main__":
-    chat = Chat()
-    chat.start()
+    app = Chat()
+    app.run()

@@ -1,5 +1,7 @@
 # About chat
-ChatGPT in your terminal!
+Chat with ChatGPT in your terminal!
+
+This is a Command Line Interface (CLI) that allows you to chat with ChatGPT in your terminal. It is built on the [textual](https://textual.textualize.io/) library and provides a simple and interactive way to access models like gpt-3.5-turbo, gpt-4-turbo and gpt-4o.
 
 Author: Isak Barbopoulos (isak@xaros.org)
 
@@ -8,13 +10,14 @@ Author: Isak Barbopoulos (isak@xaros.org)
 <details>
     <summary>Installation</summary><br>
 
-NOTE: You need python, pip and an OpenAI API key to run chat
-#### Open root folder in terminal and type:
+#### 1. Make sure you have python >=3.9 and an OpenAI API key.
+
+#### 2. Then open this folder in a terminal and type:
 ```bash
 pip install .
 ```
 
-#### Create a file named '.env' in the root of this repo and add the following line:
+#### 3. Create a file named '.env' in this folder and add the following line:
 ```bash
 OPENAI_API_KEY=<your OpenAI API key here>
 ```
@@ -23,57 +26,35 @@ OPENAI_API_KEY=<your OpenAI API key here>
 <details>
     <summary>Start a new chat</summary><br>
 
-Run `chat/src/__main/__.py` or type the following in your terminal:
+cd into this folder with your terminal of choice and type: 
+
 ```bash
-python path/to/chat/src/
+python src
 ```
 
-TIP: Bind the above command to an alias (like 'chat') for easy access
+TIP: Bind the command to an alias (like 'chat') and store it in .bashrc or .zshrc for easy access. E.g.,:
+
+```bash
+alias chat='python ~/path/to/chat/src'
+```
 
 </details>
 
 <details>
-    <summary>Commands</summary><br>
+    <summary>Create your own assistants</summary><br>
 
-Quit:
-```
-/quit
-```
+Write instructions in a .txt file and save it in `chat/bots/` and it will become automatically available as a bot.
 
-Get a description of a command:
-```
-/help save
-```
+</details>
 
-Get list of commands and their aliases:
-```
-/commands
-```
 
-Save the last message to disk:
-```
-/save
-```
+<details>
+    <summary>Todo</summary><br>
 
-Print chat history:
-```
-/history
-```
+- Make it so users can save chat history again (and let them create, name and select history_ids at will)
 
-Print a specific message from history:
-- NOTE: history counts backwards, so 1=last, 2=second to last, etc
-```
-/history 2
-```
+- Add support for other LLMs
 
-Save a specific message from history:
-```
-/history 5
-/save
-```
+- Add image generation (not currently supported by textual)
 
-Change config values:
-```
-/config bot=default
-```
 </details>

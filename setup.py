@@ -5,7 +5,10 @@ with open("requirements.txt") as f:
 
 setup(
     name="chat",
-    version="0.1",
+    description="Chat with ChatGPT in your terminal!",
+    version="0.2",
+    author="Isak Barbopoulos",
+    author_email="isak@xaros.org",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=requirements,
