@@ -33,7 +33,6 @@ BotMessageBox {
 }
 
 .question {
-    text-align: left;
     width: auto;
     min-width: 25%;
     padding: 0 1;
@@ -41,7 +40,6 @@ BotMessageBox {
 }
 
 .answer {
-    text-align: left;
     width: auto;
     min-width: 25%;
     padding: 0 1;

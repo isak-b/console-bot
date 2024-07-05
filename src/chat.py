@@ -1,14 +1,13 @@
 import asyncio
 import random
-import textwrap
-import shutil
 from halo import Halo
 
 from textual.app import App, ComposeResult
 from textual.widget import Widget
-from textual.widgets import Footer, Input, Button, Static, Select, Label
+from textual.widgets import Footer, Input, Button, Select, Label, Static
 from textual.containers import ScrollableContainer, Horizontal
 from textual.binding import Binding
+from rich.markdown import Markdown
 
 from config import load_cfg
 from bot import ChatBot
@@ -44,25 +43,31 @@ spinner_msgs = [
 class UserMessageBox(Widget):
     """Message boxes for user questions"""
 
-    def __init__(self, text: str, role: str) -> None:
+    def __init__(self, text: str, role: str, avatar: str) -> None:
         self.text = text
         self.role = role
+        self.avatar = avatar
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        yield Static(self.text, classes=f"message {self.role}")
+        self.text = f"{self.avatar} {self.text}"
+        self.text = self.text.replace(f"{self.avatar} `", f"{self.avatar}\n`")
+        yield Static(Markdown(self.text), shrink=True, classes=self.role)
 
 
 class BotMessageBox(Widget):
     """Message boxes for bot answers"""
 
-    def __init__(self, text: str, role: str) -> None:
+    def __init__(self, text: str, role: str, avatar: str) -> None:
         self.text = text
         self.role = role
+        self.avatar = avatar
         super().__init__()
 
     def compose(self) -> ComposeResult:
-        yield Static(self.text, classes=f"message {self.role}")
+        self.text = f"{self.avatar} {self.text}"
+        self.text = self.text.replace(f"{self.avatar} `", f"{self.avatar}\n`")
+        yield Static(Markdown(self.text), shrink=True, classes=self.role)
 
 
 class Chat(App):
@@ -78,8 +83,8 @@ class Chat(App):
         self.cfg = load_cfg()
         self.bot = ChatBot(self.cfg)
         self.greeting = "How can I help you today?"
-        self.question_template = f"{self.cfg['avatars']['user']} {{question}}"
-        self.answer_template = f"{self.cfg['avatars']['bot']} {{answer}}"
+        self.question_template = "{question}"  # f"{self.cfg['avatars']['user']} {{question}}"
+        self.answer_template = "{answer}"  # f"{self.cfg['avatars']['bot']} {{answer}}"
 
     def compose(self) -> ComposeResult:
         """Composes the application's root widget"""
@@ -102,7 +107,9 @@ class Chat(App):
 
         # History box
         with ScrollableContainer(id="history_box"):
-            yield BotMessageBox(self.answer_template.format(answer=self.greeting), role="answer")
+            yield BotMessageBox(
+                self.answer_template.format(answer=self.greeting), role="answer", avatar=self.cfg["avatars"]["bot"]
+            )
 
         # User input
         with Horizontal(id="input_box"):
@@ -146,16 +153,15 @@ class Chat(App):
         """Handles and displays user questions and bot responses"""
         send_button = self.query_one("#send_button")
         history_box = self.query_one("#history_box")
-        terminal_width, _ = shutil.get_terminal_size()
-        terminal_width *= 0.8
 
         # User question
         user_input = self.query_one("#user_input", Input)
         self.toggle_widgets(user_input, send_button)
         self.query_one("#user_input", Input).focus()
         question = user_input.value
-        question = textwrap.fill(question, width=terminal_width)
-        message_box = UserMessageBox(self.question_template.format(question=question), "question")
+        message_box = UserMessageBox(
+            self.question_template.format(question=question), "question", avatar=self.cfg["avatars"]["user"]
+        )
         history_box.mount(message_box)
         history_box.scroll_end(animate=False)
         with user_input.prevent(Input.Changed):
@@ -168,10 +174,11 @@ class Chat(App):
         # NOTE: Display spinner while waiting for response
         spinner = Halo(text=random.choice(spinner_msgs), spinner="dots")
         spinner.start()
-        answer = await self.bot.async_get_response(message_box.text)
+        answer = await self.bot.async_get_response(question.strip())
         spinner.stop()
-        answer = textwrap.fill(answer, width=terminal_width)
-        history_box.mount(BotMessageBox(self.answer_template.format(answer=answer), "answer"))
+        history_box.mount(
+            BotMessageBox(self.answer_template.format(answer=answer), "answer", avatar=self.cfg["avatars"]["bot"])
+        )
 
         self.toggle_widgets(user_input, send_button)
         history_box.scroll_end(animate=False)
