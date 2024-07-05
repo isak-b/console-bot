@@ -38,7 +38,7 @@ class UserMessageBox(MessageBox): ...
 class BotMessageBox(MessageBox): ...
 
 
-class Chat(App):
+class ChatApp(App):
     CSS_PATH = os.path.join(STATIC_DIR, "styles.css")
     TITLE = "ConsoleBot"
     BINDINGS = [

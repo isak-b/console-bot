@@ -1,0 +1,5 @@
+bot: AskBot  # Current choices: AskBot
+model: gpt-4o  # e.g., gpt-3.5-turbo, gpt-4-turbo, gpt-4o, mock-model
+history_size: 1
+paths:  # Relative to this config.yaml file
+  bots: bots/

@@ -3,8 +3,8 @@ from utils import load_cfg, load_bots
 
 
 class ChatBot:
-    def __init__(self, cfg: dict = load_cfg()):
-        self.cfg = cfg
+    def __init__(self, cfg: dict = None):
+        self.cfg = cfg or load_cfg()
         self.bots = load_bots(bots_path=self.cfg["paths"]["bots"])
         self.chat_models = get_models(include_chat=True)["chat"]
         self.chat_history = []

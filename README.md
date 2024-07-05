@@ -1,12 +1,21 @@
 # About ConsoleBot
 Chat with ChatGPT in your terminal!
 
-This is a Command Line Interface (CLI) that allows you to chat with ChatGPT in your terminal. It is built using the [textual](https://textual.textualize.io/) library for Python and provides a simple and interactive way to access models like gpt-3.5-turbo, gpt-4-turbo and gpt-4o.
+This is a Command Line Interface (CLI) that allows you to chat with ChatGPT in your terminal.
 
-Author: Isak Barbopoulos (isak@xaros.org)
+**Author**: Isak Barbopoulos (isak@xaros.org)
 
-Just an example:
-![Example](screenshots/example.png "Chat interface")
+### Example usage
+
+You can either open an interactive chat interface that runs in your terminal (built with the [textual](https://textual.textualize.io/) library for Python):
+
+![Example](screenshots/chat_interface.png "Chat")
+
+Or get an answer to a single question directly in the terminal:
+
+![Example](screenshots/ask_interface.png "Ask")
+
+See more details on how to install and use the bot below.
 
 ---
 
@@ -32,8 +41,10 @@ OPENAI_API_KEY=<your OpenAI API key here>
 ```
 </details>
 
+</details>
+
 <details>
-    <summary>Start a new chat</summary><br>
+    <summary>Chat: Open an interactive chat interface</summary><br>
 
 Open a terminal in the console-bot folder and write:
 
@@ -50,9 +61,26 @@ alias chat='python ~/path/to/console-bot/chat'
 </details>
 
 <details>
-    <summary>Create a new bot</summary><br>
+    <summary>Ask: Get an answer directly in the terminal</summary><br>
 
-Write your custom instructions in a .txt file and save it in `console-bot/bots/` and it will become automatically available in the app.
+Open a terminal in the console-bot folder and write:
+
+```bash
+python ask "What is the airspeed velocity of an unladen swallow?"
+```
+
+TIP: Bind the command to an alias (like 'ask') and store it in .bashrc or .zshrc for easy access. E.g.,:
+
+```bash
+alias ask='python ~/path/to/console-bot/ask'
+```
+
+<details>
+    <summary>Create new bots</summary><br>
+
+Write your custom instructions in a .txt file and save it in `console-bot/chat/bots/`, and it will become automatically available in the app. 
+
+Note that the "ask" version of ConsoleBot has its own bots directory (`console-bot/ask/bots`), so if you wish to add/modify its instructions you'd have to add the instructions to that folder and then enter the name of the bot (i.e., the filename minus the file extension, so e.g., "AskBot" for "AskBot.txt") at the "bot" key in `console-bot/ask/config-yaml`.
 
 </details>
 

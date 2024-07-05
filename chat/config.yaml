@@ -1,7 +1,7 @@
 bot: ConciseBot  # Current choices: ConciseBot, RickBot
 model: gpt-4o  # e.g., gpt-3.5-turbo, gpt-4-turbo, gpt-4o, mock-model
 history_size: 25
-paths:  # Relative to the config.yaml file
+paths:  # Relative to this config.yaml file
   bots: bots/
 avatars:
   user: 👤

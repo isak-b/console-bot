@@ -1,8 +1,9 @@
 import os
+import re
 import yaml
 
-ROOT_PATH = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-DEFAULT_CFG_PATH = os.path.join(ROOT_PATH, "config.yaml")
+APP_PATH = os.path.dirname(os.path.realpath(__file__))
+DEFAULT_CFG_PATH = os.path.join(APP_PATH, "config.yaml")
 
 
 def load_cfg(cfg_path: str = DEFAULT_CFG_PATH, make_paths_absolute: bool = True) -> dict:
@@ -30,3 +31,22 @@ def load_bots(bots_path: str) -> dict:
         with open(file_path, "r") as f:
             bots[filename.removesuffix(".txt")] = f.read()
     return bots
+
+
+def is_markdown(text: str) -> bool:
+    """Check if text contains any markdown syntax"""
+    markdown_patterns = [
+        r"^\s*#{1,6}\s",  # Headers
+        r"^\s*>\s",  # Blockquotes
+        r"\[.*\]\(.*\)",  # Links
+        r"\*\*.*\*\*",  # Bold text
+        r"\*.*\*",  # Italic text
+        r"`.*`",  # Inline code
+        r"^\s*-{3,}\s*$",  # Horizontal rules
+        r"^\s*\d+\.\s",  # Ordered lists
+        r"^\s*[-*+]\s",  # Unordered lists
+    ]
+    for pattern in markdown_patterns:
+        if re.search(pattern, text, re.MULTILINE):
+            return True
+    return False
