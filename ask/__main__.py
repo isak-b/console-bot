@@ -4,17 +4,17 @@ from dotenv import load_dotenv
 from rich.console import Console
 from rich.markdown import Markdown
 
-ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
+ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DEFAULT_CONFIG_PATH = os.path.join(ROOT_PATH, "profiles/ask/config.yaml")
 sys.path.insert(0, ROOT_PATH)
 
-from chat.bot import ChatBot  # noqa: E402
-from chat.utils import load_cfg, is_markdown
+from src.bot import ChatBot
+from src.utils import load_cfg, is_markdown
 
 load_dotenv()
-DEFAULT_CONFIG_PATH = os.path.join(ROOT_PATH, "ask", "config.yaml")
 
 
-def main(question: str, cfg_path: str = DEFAULT_CONFIG_PATH) -> str:
+def main(question: str, cfg_path: str = None) -> str:
     """A simpler non-chat version of the ConsoleBot. Use it to ask a single question and print the answer to console.
     NOTE: Doesn't have a chat history, call `python console-bot/chat` full functionality.
     """

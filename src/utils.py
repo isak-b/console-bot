@@ -2,13 +2,9 @@ import os
 import re
 import yaml
 
-APP_PATH = os.path.dirname(os.path.realpath(__file__))
-DEFAULT_CFG_PATH = os.path.join(APP_PATH, "config.yaml")
 
-
-def load_cfg(cfg_path: str = None, make_paths_absolute: bool = True) -> dict:
+def load_cfg(cfg_path: str, make_paths_absolute: bool = True) -> dict:
     """Load config from file"""
-    cfg_path = cfg_path or DEFAULT_CFG_PATH
     with open(cfg_path, "r") as f:
         cfg = yaml.safe_load(f)
     cfg["paths"]["config_dir"] = os.path.dirname(cfg_path)
@@ -21,7 +17,7 @@ def load_cfg(cfg_path: str = None, make_paths_absolute: bool = True) -> dict:
     return cfg
 
 
-def save_cfg(cfg: dict, path: str = DEFAULT_CFG_PATH) -> None:
+def save_cfg(cfg: dict, path: str) -> None:
     """Save config to file"""
     with open(path, "w") as f:
         yaml.dump(cfg, f, sort_keys=False)

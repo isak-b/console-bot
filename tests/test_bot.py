@@ -1,4 +1,4 @@
-from chat.bot import ChatBot
+from src.bot import ChatBot
 
 
 def test_bot_chat(cfg):

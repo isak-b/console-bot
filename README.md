@@ -1,41 +1,31 @@
-# About ConsoleBot
+# ConsoleBot
 Chat with ChatGPT in your terminal!
 
-This is a Command Line Interface (CLI) that allows you to chat with ChatGPT in your terminal.
+ConsoleBot is a Command Line Interface (CLI) built with the Python package [textual](https://textual.textualize.io/) that allows you to chat with ChatGPT in your terminal.
+
+![Example](screenshots/chat_interface.png "Interactive chat interface")
 
 **Author**: Isak Barbopoulos (isak@xaros.org)
-
-### Usage
-
-You can either open an interactive chat interface that runs in your terminal (built with the [textual](https://textual.textualize.io/) library for Python):
-
-![Example](screenshots/chat_interface.png "Chat")
-
-Or get an answer to a single question directly in the terminal:
-
-![Example](screenshots/ask_interface.png "Ask")
-
-See more details on how to install and use the bot below.
 
 ---
 
 <details>
-    <summary>Installation</summary><br>
+    <summary>Installation</summary>
 
-#### 1. Make sure you have Python >=3.9 and an OpenAI API key.
+1. Make sure you have Python >=3.9 and an OpenAI API key.
 
-#### 2. Open your terminal of choice and clone this repo:
+2. Open your terminal of choice and clone this repo:
 ```bash
 git clone https://github.com/isak-b/console-bot.git
 ```
 
-#### 3. Install the package and its dependencies:
+3. Install the package and its dependencies:
 ```bash
 cd console-bot
 pip install .
 ```
 
-#### 4. Create a file named '.env' in the console-bot folder and add the following line:
+4. Create a file named '.env' in the console-bot folder and add the following line:
 ```bash
 OPENAI_API_KEY=<your OpenAI API key here>
 ```
@@ -43,69 +33,79 @@ OPENAI_API_KEY=<your OpenAI API key here>
 </details>
 
 <details>
-    <summary>Chat: Open an interactive chat interface</summary><br>
+    <summary>Usage</summary>
+Open a terminal in the console-bot folder, and then either:
 
-Open a terminal in the console-bot folder and write:
+1. Open an interactive chat interface in your terminal by writing:
 
 ```bash
 python chat
 ```
 
-TIP: Bind the command to an alias (like 'chat') and store it in .bashrc or .zshrc for easy access. E.g.,:
+2. Or get an answer to a single question directly in the terminal:
 
 ```bash
-alias chat='python ~/path/to/console-bot/chat'
+python ask "How do I recursively find and delete all .log files in a directory using the terminal?"
+```
+
+TIP: Bind "python chat" and "python ask" to aliases in e.g., `~/.bashrc` (if you use bash) or `~/.zshrc` (if you use zshell) for easy access. For example:
+```bash
+alias chat="python path/to/console-bot/chat/"
+alias ask="python path/to/console-bot/ask/"
+```
+
+Then just type `chat` or `ask "<your question>"` from any location in your terminal.
+
+See more details on how to install and make modifications below.
+
+</details>
+
+<details>
+    <summary>Customize existing profiles and bots</summary>
+
+The default profiles are found here:
+- Chat: `console-bot/profiles/chat/`
+- Ask: `console-bot/profiles/ask/`
+
+Modify existing profiles and bots:
+- To change the config of one of the default profiles, open `config.yaml` in either `console-bot/profiles/chat/` or `console-bot/profiles/ask/`
+- Change the values you wish to modify, e.g., `model: gpt-4-turbo`
+- To modify an existing bot, open the .txt file of the bot you want to modify in the `bots/` directory, and write your own instructions
+
+</details>
+
+<details>
+    <summary>Create new bots</summary>
+
+Create new bots:
+- Open the `bots/` folder in the profile folder that you wish to add a bot to
+- Create a new .txt file with your custom instructions
+- If you for example save your new instructions as `console-bot/profiles/chat/bots/NewBot.txt`, then "NewBot" will appear as a choice in the chat interface.
+- You can select which bot is loaded as default by opening `config.yaml` and setting `bot: NewBot`.
+- Note that since the ask interface isn't interactive, you must set the bot according to the above step in `profiles/ask/config.yaml`.
+
+</details>
+
+<details>
+    <summary>Create new profiles</summary>
+
+Create entirely new profiles:
+- Create a new folder in `console-bot/profiles/`
+- Add a `config.yaml` file with the settings you wish to use.
+- Add a `bots/` directory with the bots that you wish to include.
+- Then, to use the new profile, call either the chat or ask command with the path to your `config.yaml` as an argument, e.g.,:
+
+```bash
+python chat "path/to/profiles/my-profile/config.yaml"
+python ask "Some question" "path/to/profiles/my-profile/config.yaml"
 ```
 
 </details>
 
 <details>
-    <summary>Ask: Get an answer directly in the terminal</summary><br>
+    <summary>Todo</summary>
 
-Open a terminal in the console-bot folder and write:
-
-```bash
-python ask "What is the airspeed velocity of an unladen swallow?"
-```
-
-TIP: Bind the command to an alias (like 'ask') and store it in .bashrc or .zshrc for easy access. E.g.,:
-
-```bash
-alias ask='python ~/path/to/console-bot/ask'
-```
-
-</details>
-
-<details>
-    <summary>Create and load non-default config files</summary><br>
-
-You can create your own config.yaml files and use them with either interface. Just point to the config file that you wish use:
-
-Chat:
-```bash
-python chat "path/to/config.yaml"
-```
-
-Ask:
-```bash
-python ask "Some question" "path/to/config.yaml"
-```
-
-</details>
-
-<details>
-    <summary>Modify or create custom bot instructions</summary><br>
-
-Write custom instructions in a .txt file and save it in `console-bot/chat/bots/`, and it will become automatically available as a bot in the app. You can set a default bot that will be pre-selected when the app starts by changing the "bot" value in `console-bot/chat/config.yaml` to e.g., "NewBot" if the .txt file is called `NewBot.txt`.
-
-For the ask version of ConsoleBot, instead add your bots to `console-bot/ask/bots/`. Note that since the "ask" interface isn't interactive, you must set the bot you want to use in `console-bot/ask/config.yaml` or it will have no effect.
-
-Note that the paths to the bots folder is relative to the config.yaml file. So you can also for example access the bots of the chat version by changing paths.bots to "../chat/bots/" (or any other folder where you might have bots).
-
-</details>
-
-<details>
-    <summary>Todo</summary><br>
+Some of the things I might implement soon:
 
 - Make it so users can save and manage chat history (create, name and select history_ids at will)
 

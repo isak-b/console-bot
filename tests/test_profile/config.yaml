@@ -1,0 +1,8 @@
+bot: MockBot
+model: mock-model
+history_size: 25
+paths:
+  bots: bots/
+avatars:
+  user: 👤
+  bot: 🤖

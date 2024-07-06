@@ -1,6 +1,6 @@
 import os
 
-from chat.models import get_models, get_openai_models, get_mock_models
+from src.models import get_models, get_openai_models, get_mock_models
 
 
 def test_openai_api_key_in_env():

@@ -1,7 +1,7 @@
 import os
 import tempfile
 
-from chat.utils import save_cfg, load_cfg, load_bots, DEFAULT_CFG_PATH
+from src.utils import save_cfg, load_cfg, load_bots
 
 
 def test_save_load_cfg():
@@ -20,9 +20,9 @@ def test_save_load_cfg():
         assert loaded_cfg == cfg
 
 
-def test_relative_cfg_paths():
-    config_dir = os.path.dirname(DEFAULT_CFG_PATH)
-    rel_paths = load_cfg(cfg_path=DEFAULT_CFG_PATH, make_paths_absolute=False)["paths"]
+def test_relative_cfg_paths(cfg_path):
+    config_dir = os.path.dirname(cfg_path)
+    rel_paths = load_cfg(cfg_path=cfg_path, make_paths_absolute=False)["paths"]
     expected_paths = {"bots": "bots/", "config_dir": config_dir}
     assert len(rel_paths) == len(expected_paths)
     for expected_key, expected_path in expected_paths.items():
@@ -30,9 +30,9 @@ def test_relative_cfg_paths():
         assert rel_paths[expected_key] == expected_path
 
 
-def test_absolute_cfg_paths():
-    config_dir = os.path.dirname(DEFAULT_CFG_PATH)
-    abs_paths = load_cfg(cfg_path=DEFAULT_CFG_PATH, make_paths_absolute=True)["paths"]
+def test_absolute_cfg_paths(cfg_path):
+    config_dir = os.path.dirname(cfg_path)
+    abs_paths = load_cfg(cfg_path=cfg_path, make_paths_absolute=True)["paths"]
     expected_paths = {"bots": os.path.join(config_dir, "bots/"), "config_dir": config_dir}
     assert len(abs_paths) == len(expected_paths)
     for expected_key, expected_path in expected_paths.items():
@@ -42,7 +42,8 @@ def test_absolute_cfg_paths():
 
 def test_load_bots(cfg):
     bots = load_bots(bots_path=cfg["paths"]["bots"])
-    expected_bots = ["ConciseBot", "RickBot"]
+    expected_bots = {"MockBot": "foo bar"}
     assert len(bots) == len(expected_bots)
-    for expected_bot in expected_bots:
+    for expected_bot, expected_instruction in expected_bots.items():
         assert expected_bot in bots
+        assert expected_instruction == bots[expected_bot]
