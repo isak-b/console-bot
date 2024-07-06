@@ -14,9 +14,9 @@ def load_cfg(cfg_path: str = None, make_paths_absolute: bool = True) -> dict:
     cfg["paths"]["config_dir"] = os.path.dirname(cfg_path)
 
     # Make paths absolute
-    for dir_name, dir_path in cfg["paths"].items():
-        if make_paths_absolute is True and dir_path.startswith("/") is False:
-            cfg["paths"][dir_name] = os.path.join(cfg["paths"]["config_dir"], dir_path)
+    for name, path in cfg["paths"].items():
+        if make_paths_absolute is True and os.path.isabs(path) is False:
+            cfg["paths"][name] = os.path.join(cfg["paths"]["config_dir"], path)
 
     return cfg
 
