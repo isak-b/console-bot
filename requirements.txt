@@ -3,5 +3,5 @@ python-dotenv==1.0.0
 PyYAML==6.0.1
 textual==0.71.0
 rich==13.7.0
-halo==0.0.31
+pyperclip==1.9.0
 pytest==7.4.2

@@ -28,17 +28,31 @@ class MockModel:
         return self
 
 
-def get_openai_models(include_chat: bool = True, chat_prefixes: list = ["gpt-3.5", "gpt-4"]) -> dict:
-    """Get OpenAI models"""
+def get_openai_models(include_chat: bool = True) -> dict:
+    """Get OpenAI models
+    Current model compatibility: https://platform.openai.com/docs/models/model-endpoint-compatibility
+    """
     assert os.getenv("OPENAI_API_KEY") is not None, f"Environment variable 'OPENAI_API_KEY' has not been set."
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-    all_models = client.models.list().data
     models = {}
+
     if include_chat is True:
-        models["chat"] = {}
-        for model in all_models:
-            if any(model.id.startswith(prefix) for prefix in chat_prefixes):
-                models["chat"][model.id] = functools.partial(client.chat.completions.create, model=model.id)
+        chat_models = [
+            "gpt-4o",
+            "gpt-4o-2024-05-13",
+            "gpt-4-turbo",
+            "gpt-4-turbo-2024-04-09",
+            "gpt-4-turbo-preview",
+            "gpt-4-0125-preview",
+            "gpt-4-1106-preview",
+            "gpt-4",
+            "gpt-4-0613",
+            "gpt-4-0314",
+            "gpt-3.5-turbo",
+            "gpt-3.5-turbo-0125",
+            "gpt-3.5-turbo-1106",
+        ]
+        models["chat"] = {k: functools.partial(client.chat.completions.create, model=k) for k in chat_models}
     return models
 
 

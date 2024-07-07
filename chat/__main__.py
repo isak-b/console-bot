@@ -1,17 +1,15 @@
 import os
 import sys
 import asyncio
-import yaml
-import random
+import pyperclip
 
 from dotenv import load_dotenv
+from textual import events
 from textual.app import App, ComposeResult
-from textual.widget import Widget
-from textual.widgets import Header, Footer, Input, Button, Select, Static
-from textual.containers import ScrollableContainer, Horizontal
+from textual.widgets import Header, Footer, Select, TextArea
+from textual.containers import Horizontal
 from textual.binding import Binding
 from rich.markdown import Markdown
-from halo import Halo
 
 ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_PATH = os.path.join(ROOT_PATH, "chat/static/")
@@ -24,35 +22,87 @@ from src.utils import load_cfg
 load_dotenv()
 
 
-class MessageBox(Widget):
-    """A message box for a question or answer"""
+class HistoryBox(TextArea):
+    """Displays chat history."""
 
-    def __init__(self, text: str, role: str, avatar: str = None) -> None:
-        self.text = text
-        self.role = role
-        self.avatar = avatar
-        super().__init__()
+    BINDINGS = [
+        Binding("ctrl+c", "copy", "Copy", key_display="ctrl+C"),
+        Binding("ctrl+a", "select_all", "Select all", key_display="ctrl+A"),
+    ]
 
-    def compose(self) -> ComposeResult:
-        if self.avatar:
-            self.text = f"{self.avatar} {self.text}"
-            self.text = self.text.replace(f"{self.avatar} `", f"{self.avatar}\n`")
-        yield Static(Markdown(self.text), shrink=True, classes=self.role)
+    def on_mount(self) -> None:
+        self.read_only = True
+
+    def add_msg(self, msg: str, avatar: str = None):
+        if not msg:
+            return
+        if avatar:
+            msg = f"{avatar} {msg}"
+        self.text += f"\n{msg}"
+
+    def action_copy(self) -> None:
+        pyperclip.copy(self.selected_text)
+
+    def _on_key(self, event: events.Key) -> None:
+        if event.key == "ctrl+c":
+            pyperclip.copy(self.selected_text)
+        elif event.key == "enter":
+            self.screen.focus_next()
+        else:
+            return
+        event.prevent_default()
 
 
-class UserMessageBox(MessageBox): ...
+class InputField(TextArea):
+    """Input field for the user."""
 
+    BINDINGS = [
+        Binding("ctrl+c", "copy", "Copy", key_display="ctrl+C"),
+        Binding("ctrl+v", "paste", "Paste", key_display="ctrl+V"),
+        Binding("ctrl+x", "cut", "Cut", key_display="ctrl+X"),
+        Binding("ctrl+a", "select_all", "Select All", key_display="ctrl+A"),
+        Binding("enter", "send", "Send", key_display="Enter"),
+        Binding("shift+enter", "newline", "Newline", key_display="shift+Enter"),
+    ]
 
-class BotMessageBox(MessageBox): ...
+    def on_mount(self) -> None:
+        self.styles.height = "4"
+        self.tab_behavior = "indent"
+
+    def action_copy(self) -> None:
+        pyperclip.copy(self.selected_text)
+
+    def action_paste(self) -> None:
+        self.insert(pyperclip.paste())
+
+    def action_newline(self) -> None:
+        self.insert("\n")
+
+    def action_cut(self) -> None:
+        pyperclip.copy(self.selected_text)
+        self.action_delete_left()
+
+    async def action_send(self) -> None:
+        question = self.text
+        self.text = ""
+        await app.handle_messages(question)
+
+    async def _on_key(self, event: events.Key) -> None:
+        if event.key == "enter":
+            await self.action_send()
+        elif event.key == "escape":
+            await app.action_quit()
+        else:
+            return
+        event.prevent_default()
 
 
 class ChatApp(App):
     CSS_PATH = os.path.join(STATIC_PATH, "styles.css")
-    SPINNER_PATH = os.path.join(STATIC_PATH, "spinner.yaml")
     TITLE = "ConsoleBot"
     BINDINGS = [
         Binding("escape", "quit", "Quit", key_display="ESC"),
-        Binding("ctrl+x", "clear", "Clear", key_display="ctrl+X"),
+        Binding("ctrl+c", "", "", key_display=""),  # Prevent ctrl+c from exiting the app
     ]
 
     def __init__(self, cfg_path: str = None) -> None:
@@ -60,45 +110,34 @@ class ChatApp(App):
         self.cfg = load_cfg(cfg_path=cfg_path)
         self.bot = ChatBot(self.cfg)
         self.greeting = "How can I help you today?"
-        with open(self.SPINNER_PATH, "r") as f:
-            self.spinner_msgs = yaml.safe_load(f)
 
     def compose(self) -> ComposeResult:
         """Composes the application's root widget"""
-        yield Header()
+        yield Header(id="header")
 
         # Menu
-        with Horizontal(id="menu_box"):
+        with Horizontal(id="menu"):
             yield Select(
                 [(key, key) for key in self.bot.chat_models],
                 value=self.cfg["model"],
-                prompt="select chat model",
                 id="select_model",
+                allow_blank=False,
             )
             yield Select(
                 [(key, key) for key in self.bot.bots],
                 value=self.cfg["bot"],
-                prompt="select bot",
                 id="select_bot",
+                allow_blank=False,
             )
 
-        # History box
-        with ScrollableContainer(id="history_box"):
-            avatar = self.cfg.get("avatars", {}).get("bot")
-            yield BotMessageBox(self.greeting, role="answer", avatar=avatar)
-
-        # User input
-        with Horizontal(id="input_box"):
-            yield Input(id="user_input")
-
-            # NOTE: send_button is currently disabled and hidden
-            yield Button(label="", variant="default", id="send_button", disabled=True)
-
-        yield Footer()
+        bot_avatar = self.cfg.get("avatars", {}).get("bot")
+        yield HistoryBox(f"{bot_avatar} {self.greeting}", id="chat_history")
+        yield InputField("", id="input_field")
+        yield Footer(id="footer")
 
     async def on_mount(self) -> None:
         """Triggered when the app is mounted"""
-        self.query_one("#user_input", Input).focus()
+        self.query_one("#input_field", InputField).focus()
 
     def on_select_changed(self, event: Select.Changed) -> None:
         """Triggered when a Select widget is changed. Get id of the changed widget with `event.select.id`"""
@@ -106,60 +145,25 @@ class ChatApp(App):
             self.cfg["model"] = event.value
         elif event.select.id == "select_bot":
             self.cfg["bot"] = event.value
+        self.query_one("#input_field", InputField).focus()
 
-    def action_clear(self) -> None:
-        """Triggered when the clear command is entered. Clears history box and creates new bot instance."""
-        self.bot = ChatBot(self.cfg)
-        history_box = self.query_one("#history_box")
-        history_box.remove()
-        self.mount(ScrollableContainer(id="history_box"))
+    async def handle_messages(self, question: str) -> None:
+        """Asynchronous function that posts user question to chat_history and then gets bot answer"""
 
-    async def on_button_pressed(self, event: Button.Pressed) -> None:
-        """Triggered when a Button is pressed. Get id with: `event.button.id`"""
-        if event.button.id == "send_button":
-            # NOTE: send_button is currently disabled and hidden
-            await self.handle_messages()
+        # Question
+        user_avatar = self.cfg.get("avatars", {}).get("user")
+        chat_history = self.query_one("#chat_history")
+        chat_history.add_msg(msg=question, avatar=user_avatar)
 
-    async def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Triggered when Input is submitted. Get id with: `event.input.id`"""
-        if event.input.id == "user_input":
-            await self.handle_messages()
-
-    async def handle_messages(self) -> None:
-        """Handles and displays user questions and bot responses"""
-        send_button = self.query_one("#send_button")
-        history_box = self.query_one("#history_box")
-
-        # User question
-        user_input = self.query_one("#user_input", Input)
-        self.toggle_widgets(user_input, send_button)
-        self.query_one("#user_input", Input).focus()
-        question = user_input.value
-        avatar = self.cfg.get("avatars", {}).get("user")
-        message_box = UserMessageBox(question, role="question", avatar=avatar)
-        history_box.mount(message_box)
-        history_box.scroll_end(animate=False)
-        with user_input.prevent(Input.Changed):
-            user_input.value = ""
-
-        # Wait for user question to be posted before getting bot answer
+        # Wait for user question to be posted before getting answer
         await asyncio.sleep(0.1)
 
-        # Bot answer
-        # NOTE: Display spinner while waiting for response
-        spinner = Halo(text=random.choice(self.spinner_msgs), spinner="dots")
-        spinner.start()
+        # Answer
+        bot_avatar = self.cfg.get("avatars", {}).get("bot")
         answer = await self.bot.async_chat(question.strip())
-        spinner.stop()
-        avatar = self.cfg.get("avatars", {}).get("bot")
-        history_box.mount(BotMessageBox(answer, role="answer", avatar=avatar))
-
-        self.toggle_widgets(user_input, send_button)
-        history_box.scroll_end(animate=False)
-
-    def toggle_widgets(self, *widgets: Widget) -> None:
-        for w in widgets:
-            w.disabled = not w.disabled
+        chat_history = self.query_one("#chat_history")
+        chat_history.add_msg(msg=answer, avatar=bot_avatar)
+        chat_history.scroll_end(animate=False)
 
 
 if __name__ == "__main__":
