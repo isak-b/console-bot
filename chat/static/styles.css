@@ -10,11 +10,11 @@
 }
 
 #select_model {
-    border: wide rgb(42, 42, 42);
+    border: none;
 }
 
 #select_bot {
-    border: wide rgb(42, 42, 42);
+    border: none;
 }
 
 #chat_history {

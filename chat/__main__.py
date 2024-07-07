@@ -22,6 +22,26 @@ from src.utils import load_cfg
 load_dotenv()
 
 
+class SelectBox(Select):
+    BINDINGS = [
+        Binding("enter", "show_overlay", "Show items", key_display="Enter"),
+    ]
+
+    def _on_key(self, event: events.Key) -> None:
+        if event.key == "up" and self.expanded is False:
+            if self.screen.focus_chain[0] != self:  # Stop at element 0
+                self.screen.focus_previous()
+        elif event.key == "down" and self.expanded is False:
+            self.screen.focus_next()
+        elif event.key == "left":
+            self.screen.focus_previous()
+        elif event.key == "right":
+            self.screen.focus_next()
+        else:
+            return
+        event.prevent_default()
+
+
 class HistoryBox(TextArea):
     """Displays chat history."""
 
@@ -34,11 +54,9 @@ class HistoryBox(TextArea):
         self.read_only = True
 
     def add_msg(self, msg: str, avatar: str = None):
-        if not msg:
-            return
         if avatar:
             msg = f"{avatar} {msg}"
-        self.text += f"\n{msg}"
+        self.text += f"\n\n{msg}"
 
     def action_copy(self) -> None:
         pyperclip.copy(self.selected_text)
@@ -48,6 +66,16 @@ class HistoryBox(TextArea):
             pyperclip.copy(self.selected_text)
         elif event.key == "enter":
             self.screen.focus_next()
+        elif event.key == "up":
+            if self.cursor_location == (0, 0):
+                self.screen.focus_previous()
+            else:
+                self.action_cursor_up()
+        elif event.key == "down":
+            if self.cursor_at_end_of_text:
+                self.screen.focus_next()
+            else:
+                self.action_cursor_down()
         else:
             return
         event.prevent_default()
@@ -62,7 +90,7 @@ class InputField(TextArea):
         Binding("ctrl+x", "cut", "Cut", key_display="ctrl+X"),
         Binding("ctrl+a", "select_all", "Select All", key_display="ctrl+A"),
         Binding("enter", "send", "Send", key_display="Enter"),
-        Binding("shift+enter", "newline", "Newline", key_display="shift+Enter"),
+        Binding("shift+enter", "newline", "Newline", key_display="Shift+Enter"),
     ]
 
     def on_mount(self) -> None:
@@ -83,15 +111,21 @@ class InputField(TextArea):
         self.action_delete_left()
 
     async def action_send(self) -> None:
-        question = self.text
-        self.text = ""
-        await app.handle_messages(question)
+        if self.text:
+            question = self.text
+            self.text = ""
+            await app.handle_messages(question)
 
     async def _on_key(self, event: events.Key) -> None:
         if event.key == "enter":
             await self.action_send()
         elif event.key == "escape":
             await app.action_quit()
+        elif event.key == "up":
+            if self.cursor_location == (0, 0):
+                self.screen.focus_previous()
+            else:
+                self.action_cursor_up()
         else:
             return
         event.prevent_default()
@@ -117,13 +151,13 @@ class ChatApp(App):
 
         # Menu
         with Horizontal(id="menu"):
-            yield Select(
+            yield SelectBox(
                 [(key, key) for key in self.bot.chat_models],
                 value=self.cfg["model"],
                 id="select_model",
                 allow_blank=False,
             )
-            yield Select(
+            yield SelectBox(
                 [(key, key) for key in self.bot.bots],
                 value=self.cfg["bot"],
                 id="select_bot",
@@ -139,8 +173,8 @@ class ChatApp(App):
         """Triggered when the app is mounted"""
         self.query_one("#input_field", InputField).focus()
 
-    def on_select_changed(self, event: Select.Changed) -> None:
-        """Triggered when a Select widget is changed. Get id of the changed widget with `event.select.id`"""
+    def on_select_changed(self, event: SelectBox.Changed) -> None:
+        """Triggered when a SelectBox widget is changed. Get id of the changed widget with `event.select.id`"""
         if event.select.id == "select_model":
             self.cfg["model"] = event.value
         elif event.select.id == "select_bot":
