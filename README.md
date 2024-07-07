@@ -3,8 +3,6 @@ Chat with ChatGPT in your terminal!
 
 ConsoleBot is a Command Line Interface (CLI) built with the Python package [textual](https://textual.textualize.io/) that allows you to chat with ChatGPT in your terminal.
 
-![Example](screenshots/chat_interface.png "Interactive chat interface")
-
 **Author**: Isak Barbopoulos (isak@xaros.org)
 
 ---
