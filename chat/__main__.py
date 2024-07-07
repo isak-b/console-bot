@@ -9,7 +9,6 @@ from textual.app import App, ComposeResult
 from textual.widgets import Header, Footer, Select, TextArea
 from textual.containers import Horizontal
 from textual.binding import Binding
-from rich.markdown import Markdown
 
 ROOT_PATH = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_PATH = os.path.join(ROOT_PATH, "chat/static/")
@@ -48,15 +47,22 @@ class HistoryBox(TextArea):
     BINDINGS = [
         Binding("ctrl+c", "copy", "Copy", key_display="ctrl+C"),
         Binding("ctrl+a", "select_all", "Select all", key_display="ctrl+A"),
+        Binding("PgUp", "cursor_page_up", "Page up", show=True),
+        Binding("PgDown", "cursor_page_down", "Page down", show=True),
     ]
 
-    def on_mount(self) -> None:
+    async def on_mount(self) -> None:
         self.read_only = True
+        self.language = "markdown"
 
-    def add_msg(self, msg: str, avatar: str = None):
+    async def add_msg(self, msg: str, avatar: str = None):
         if avatar:
             msg = f"{avatar} {msg}"
-        self.text += f"\n\n{msg}"
+        if len(self.text) > 0:
+            msg = f"\n\n{msg}"
+        self.text += msg
+        self.action_cursor_page_down()
+        self.action_cursor_line_end()
 
     def action_copy(self) -> None:
         pyperclip.copy(self.selected_text)
@@ -96,6 +102,7 @@ class InputField(TextArea):
     def on_mount(self) -> None:
         self.styles.height = "4"
         self.tab_behavior = "indent"
+        self.language = "markdown"
 
     def action_copy(self) -> None:
         pyperclip.copy(self.selected_text)
@@ -112,9 +119,7 @@ class InputField(TextArea):
 
     async def action_send(self) -> None:
         if self.text:
-            question = self.text
-            self.text = ""
-            await app.handle_messages(question)
+            await self.app.handle_messages()
 
     async def _on_key(self, event: events.Key) -> None:
         if event.key == "enter":
@@ -164,13 +169,15 @@ class ChatApp(App):
                 allow_blank=False,
             )
 
-        bot_avatar = self.cfg.get("avatars", {}).get("bot")
-        yield HistoryBox(f"{bot_avatar} {self.greeting}", id="chat_history")
-        yield InputField("", id="input_field")
+        yield HistoryBox(id="chat_history")
+        yield InputField(id="input_field")
         yield Footer(id="footer")
 
     async def on_mount(self) -> None:
         """Triggered when the app is mounted"""
+        bot_avatar = self.cfg.get("avatars", {}).get("bot")
+        chat_history = self.query_one("#chat_history", HistoryBox)
+        await chat_history.add_msg(self.greeting, avatar=bot_avatar)
         self.query_one("#input_field", InputField).focus()
 
     def on_select_changed(self, event: SelectBox.Changed) -> None:
@@ -181,22 +188,23 @@ class ChatApp(App):
             self.cfg["bot"] = event.value
         self.query_one("#input_field", InputField).focus()
 
-    async def handle_messages(self, question: str) -> None:
+    async def handle_messages(self) -> None:
         """Asynchronous function that posts user question to chat_history and then gets bot answer"""
+        input_field = self.query_one("#input_field", InputField)
+        question = input_field.text
+        input_field.text = ""
 
         # Question
+        chat_history = self.query_one("#chat_history", HistoryBox)
         user_avatar = self.cfg.get("avatars", {}).get("user")
-        chat_history = self.query_one("#chat_history")
-        chat_history.add_msg(msg=question, avatar=user_avatar)
-
-        # Wait for user question to be posted before getting answer
-        await asyncio.sleep(0.1)
+        await chat_history.add_msg(msg=question, avatar=user_avatar)
+        chat_history.scroll_end(animate=False)
+        await asyncio.sleep(0.1)  # Wait for the message to be added before sending the next message
 
         # Answer
         bot_avatar = self.cfg.get("avatars", {}).get("bot")
         answer = await self.bot.async_chat(question.strip())
-        chat_history = self.query_one("#chat_history")
-        chat_history.add_msg(msg=answer, avatar=bot_avatar)
+        await chat_history.add_msg(msg=answer, avatar=bot_avatar)
         chat_history.scroll_end(animate=False)
 
 
