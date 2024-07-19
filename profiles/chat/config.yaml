@@ -1,11 +1,15 @@
-bot: ConciseBot  # Current choices: ConciseBot, RickBot
-model: gpt-4o  # e.g., gpt-3.5-turbo, gpt-4-turbo, gpt-4o, mock-model
-history_size: 25
+assistant: ConciseBot
+models:
+  chat: gpt-4o-mini  # e.g., gpt-4o-mini, gpt-4o, gpt-4-turbo, mock-model
+history:
+  size: 25
+  auto_save: False
 paths:
   # Paths can be specified as either absolute or relative:
   # - Absolute: Paths that start with "/" (or a drive letter and ":\\" on windows) and represent the full path from the root directory of the filesystem.
   # - Relative: Do not start with "/" and are relative to the location of this config file.
-  bots: bots/
+  assistants: assistants/
+  history: history/
 avatars:
+  assistant: 🤖
   user: 👤
-  bot: 🤖

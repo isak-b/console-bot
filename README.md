@@ -59,26 +59,26 @@ See more details on how to install and make modifications below.
 </details>
 
 <details>
-    <summary>Customize existing profiles and bots</summary>
+    <summary>Customize existing profiles and assistants</summary>
 
 The default profiles are found here:
 - Chat: `console-bot/profiles/chat/`
 - Ask: `console-bot/profiles/ask/`
 
-Modify existing profiles and bots:
+Modify existing profiles and assistants:
 - To change the config of one of the default profiles, open `config.yaml` in either `console-bot/profiles/chat/` or `console-bot/profiles/ask/`
 - Change the values you wish to modify, e.g., `model: gpt-4-turbo`
-- To modify an existing bot, open the .txt file of the bot you want to modify in the `bots/` directory, and write your own instructions
+- To modify an existing bot, open the .txt file of the bot you want to modify in the `assistants/` directory, and write your own instructions
 
 </details>
 
 <details>
-    <summary>Create new bots</summary>
+    <summary>Create new assistants</summary>
 
-Create new bots:
-- Open the `bots/` folder in the profile folder that you wish to add a bot to
+Create new assistants:
+- Open the `assistants/` folder in the profile folder that you wish to add a bot to
 - Create a new .txt file with your custom instructions
-- If you for example save your new instructions as `console-bot/profiles/chat/bots/NewBot.txt`, then "NewBot" will appear as a choice in the chat interface.
+- If you for example save your new instructions as `console-bot/profiles/chat/assistants/NewBot.txt`, then "NewBot" will appear as a choice in the chat interface.
 - You can select which bot is loaded as default by opening `config.yaml` and setting `bot: NewBot`.
 - Note that since the ask interface isn't interactive, you must set the bot according to the above step in `profiles/ask/config.yaml`.
 
@@ -90,7 +90,7 @@ Create new bots:
 Create entirely new profiles:
 - Create a new folder in `console-bot/profiles/`
 - Add a `config.yaml` file with the settings you wish to use.
-- Add a `bots/` directory with the bots that you wish to include.
+- Add a `assistants/` directory with the assistants that you wish to include.
 - Then, to use the new profile, call either the chat or ask command with the path to your `config.yaml` as an argument, e.g.,:
 
 ```bash

@@ -1,6 +1,10 @@
 import os
 import re
+import glob
 import yaml
+import json
+import time
+from datetime import datetime
 
 
 def load_cfg(cfg_path: str, make_paths_absolute: bool = True) -> dict:
@@ -23,14 +27,39 @@ def save_cfg(cfg: dict, path: str) -> None:
         yaml.dump(cfg, f, sort_keys=False)
 
 
-def load_bots(bots_path: str) -> dict:
-    """Load bots from files"""
-    bots = {}
-    for filename in os.listdir(bots_path):
-        file_path = os.path.join(bots_path, filename)
-        with open(file_path, "r") as f:
-            bots[filename.removesuffix(".txt")] = f.read()
-    return bots
+def load_files(path: str, add_created_datetime: bool = False) -> dict:
+    """Load files from a path and return as dict"""
+    output = {}
+    files = list(filter(os.path.isfile, glob.glob(path + "*")))
+    if add_created_datetime is True:
+        files.sort(key=lambda x: os.path.getctime(x), reverse=True)
+
+    for file_path in files:
+        name = os.path.splitext(os.path.basename(file_path))[0]
+        content = None
+        with open(os.path.join(path, file_path), "r") as f:
+            if file_path.endswith(".txt"):
+                content = f.read()
+            elif file_path.endswith(".json"):
+                content = json.load(f)
+            elif file_path.endswith(".yaml"):
+                content = yaml.safe_load(f)
+
+        if content is not None:
+            if add_created_datetime is True:
+                output[name] = {"content": content, "date": datetime.fromtimestamp(os.path.getctime(file_path))}
+            else:
+                output[name] = content
+    return output
+
+
+def save_messages(messages: list, path: str) -> None:
+    """Save messages to a file"""
+    with open(path, "w") as f:
+        if path.endswith(".yaml"):
+            yaml.dump(messages, f, sort_keys=False)
+        elif path.endswith(".json"):
+            json.dump(messages, f, indent=2)
 
 
 def is_markdown(text: str) -> bool:
@@ -50,3 +79,30 @@ def is_markdown(text: str) -> bool:
         if re.search(pattern, text, re.MULTILINE):
             return True
     return False
+
+
+def get_time_separator(event_date: datetime, current_date: datetime = datetime.now()):
+    """Get time separator based on event_date vs. current_date"""
+    days_diff = (current_date - event_date).days
+    event_week = event_date.strftime("%W")
+    event_month = event_date.strftime("%B")
+    event_year = event_date.strftime("%Y")
+
+    current_week = current_date.strftime("%W")
+    current_month = current_date.strftime("%B")
+    current_year = current_date.strftime("%Y")
+
+    if days_diff < 1:
+        separator = "Today"
+    elif days_diff < 2:
+        separator = "Yesterday"
+    elif event_year == current_year and event_month == current_month and event_week == current_week:
+        separator = "This week"
+    elif event_year == current_year and event_month == current_month:
+        separator = "This month"
+    elif event_year == current_year:
+        separator = event_month
+    else:
+        separator = event_year
+
+    return separator

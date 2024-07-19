@@ -31,7 +31,9 @@ def main(question: str, cfg_path: str = None) -> str:
 
     # Print to console
     console = Console()
-    tags = Markdown(f"\[\033[34m{bot.cfg['bot']}\033[0m]\[\033[36m{bot.cfg['model']}\033[0m]:")
+    assistant = bot.cfg["assistant"]
+    model = bot.cfg["models"]["chat"]
+    tags = Markdown(f"\[\033[34m{assistant}\033[0m]\[\033[36m{model}\033[0m]:")
     console.print(tags, answer)
 
 
