@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 import asyncio
 import pyperclip
 
@@ -23,13 +22,32 @@ from src.utils import load_cfg, get_time_separator
 load_dotenv()
 
 navigation_map = {
-    "history_list": {"up": "#tab_chat", "right": "#chat_history"},
-    "chat_history": {"left": "#history_list", "up": "#tab_chat", "down": "#input_field"},
-    "input_field": {"left": "#history_list", "up": "#chat_history"},
+    "history_list": {"up": "menu", "right": "chat_history"},
+    "chat_history": {"left": "history_list", "up": "menu", "down": "input_field"},
+    "input_field": {"left": "history_list", "up": "chat_history"},
+    "menu": {
+        "down": {"tab_chat": "history_list", "tab_assistant": "select_assistant", "tab_settings": "select_model"},
+    },
 }
 
 
-class Menu(TabbedContent): ...
+class Menu(TabbedContent):
+    def on_mount(self):
+        self.focused_tab = "foo bar"
+
+    def _on_key(self, event: events.Key) -> None:
+        if event.key == "down":
+            if self.active != self.focused_tab:
+                target = self.app.query_one(f"#{navigation_map[self.id][event.key][self.active]}")
+                target.focus()
+            else:
+                return
+        else:
+            return
+        event.prevent_default()
+
+    def on_tab_pane_focused(self):
+        self.focused_tab = self.active
 
 
 class SelectBox(Select): ...
@@ -42,7 +60,7 @@ class HistoryList(OptionList):
                 self.action_cursor_up()
                 self.action_select()
         elif event.key == "right":
-            target = self.app.query_one(navigation_map[self.id][event.key])
+            target = self.app.query_one(f"#{navigation_map[self.id][event.key]}")
             target.focus()
             target.cursor_location = (0, 0)
         elif event.key == "down":
@@ -81,17 +99,17 @@ class ChatHistory(TextArea):
     def _on_key(self, event: events.Key) -> None:
         if event.key == "left":
             if self.cursor_location == (0, 0):
-                self.app.query_one(navigation_map[self.id][event.key]).focus()
+                self.app.query_one(f"#{navigation_map[self.id][event.key]}").focus()
             else:
                 self.action_cursor_left()
         elif event.key == "up":
             if self.cursor_location == (0, 0):
-                self.app.query_one(navigation_map[self.id][event.key]).focus()
+                self.app.query_one(f"#{navigation_map[self.id][event.key]}").focus()
             else:
                 self.action_cursor_up()
         elif event.key == "down":
             if self.cursor_at_end_of_text:
-                self.app.query_one(navigation_map[self.id][event.key]).focus()
+                self.app.query_one(f"#{navigation_map[self.id][event.key]}").focus()
             else:
                 self.action_cursor_down()
         elif event.key == "enter":
@@ -144,12 +162,12 @@ class InputField(TextArea):
             await app.action_quit()
         elif event.key == "up":
             if self.cursor_location == (0, 0):
-                self.app.query_one(navigation_map[self.id][event.key]).focus()
+                self.app.query_one(f"#{navigation_map[self.id][event.key]}").focus()
             else:
                 self.action_cursor_up()
         elif event.key == "left":
             if self.cursor_location == (0, 0):
-                self.app.query_one(navigation_map[self.id][event.key]).focus()
+                self.app.query_one(f"#{navigation_map[self.id][event.key]}").focus()
             else:
                 self.action_cursor_left()
         elif event.key == "down":
@@ -209,6 +227,7 @@ class ChatApp(App):
         """Triggered when the app is first mounted"""
         await self.set_history_list()
         self.query_one("#input_field", InputField).focus()
+        self.query_one("#menu").active = "tab_settings"
 
     def on_select_changed(self, event: SelectBox.Changed) -> None:
         """Triggered when a SelectBox widget is changed. Get id of the changed widget with `event.select.id`"""
