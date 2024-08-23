@@ -1,8 +1,12 @@
-bot: MockBot
-model: mock-model
-history_size: 25
+assistant: MockBot
+models:
+  chat: mock-model
+history:
+  size: 25
+  auto_save: False
 paths:
-  bots: bots/
+  assistants: assistants/
+  history: history/
 avatars:
   user: 👤
   bot: 🤖

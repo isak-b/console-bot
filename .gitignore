@@ -3,7 +3,6 @@ __pycache__/
 .DS_STORE
 .vscode/
 
-!/*/.gitkeep
-/history/**
-/saved/**
+**/history/*
+!/**/.gitkeep
 .env

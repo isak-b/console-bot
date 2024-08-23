@@ -9,12 +9,11 @@
     background: black;
 }
 
-#select_model {
-    border: none;
-}
-
-#select_bot {
-    border: none;
+#history_list {
+    width: 20%;
+    height: 100%;
+    background: black;
+    border: round gray;
 }
 
 #chat_history {
@@ -26,6 +25,14 @@
     width: 100%;
     border: round gray;
     background: black;
+}
+
+#select_bot {
+    border: none;
+    }
+    
+#select_model {
+    border: none;
 }
 
 #footer {
