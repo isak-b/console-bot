@@ -5,7 +5,7 @@ def test_bot_chat(cfg):
     bot = ChatBot(cfg)
     expected_roles = ["assistant", "user", "assistant", "user", "assistant"]
     expected_messages = [
-        "Hi, how I help you today?",
+        "Hi, how can I help you today?",
         "foo",
         "This is just a mock reply",
         "bar",

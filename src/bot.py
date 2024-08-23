@@ -19,7 +19,7 @@ class ChatBot:
     def add_new_chat(self):
         key_order = [self.new_chat_id] + [k for k in self._history]
         self._history[self.new_chat_id] = {
-            "content": [{"role": "assistant", "content": "Hi, how I help you today?"}],
+            "content": [{"role": "assistant", "content": "Hi, how can I help you today?"}],
             "date": datetime.now(),
         }
         self._history = {k: self._history[k] for k in key_order}
@@ -29,7 +29,7 @@ class ChatBot:
             model = self.models["chat"][self.cfg["models"]["chat"]]
             instruction = {
                 "role": "system",
-                "content": "Return a very short title for based on the following question",
+                "content": "Return a very short title for this chat based on the following question",
             }
             messages = [msg, instruction]
             new_history_id = model(messages=messages).choices[0].message.content.strip()
