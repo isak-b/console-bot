@@ -3,7 +3,6 @@ import re
 import glob
 import yaml
 import json
-import time
 from datetime import datetime
 
 
@@ -55,6 +54,7 @@ def load_files(path: str, add_created_datetime: bool = False) -> dict:
 
 def save_messages(messages: list, path: str) -> None:
     """Save messages to a file"""
+    os.makedirs(os.path.split(path)[0], exist_ok=True)
     with open(path, "w") as f:
         if path.endswith(".yaml"):
             yaml.dump(messages, f, sort_keys=False)

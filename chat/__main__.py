@@ -187,7 +187,7 @@ class ChatApp(App):
         Binding("ctrl+s", "save", "Save", key_display="ctrl+S"),
     ]
 
-    def __init__(self, cfg_path: str = None) -> None:
+    def __init__(self, cfg_path: str = None):
         super().__init__()
         self.greeting = "How can I help you today?"
         self.bot = ChatBot(load_cfg(cfg_path=cfg_path))
