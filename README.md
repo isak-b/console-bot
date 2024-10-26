@@ -105,8 +105,6 @@ python ask "Some question" "path/to/profiles/my-profile/config.yaml"
 
 Some of the things I might implement soon:
 
-- Make it so users can save and manage chat history (create, name and select history_ids at will)
-
 - Add support for other LLMs
 
 - Add image generation (not currently supported by textual)
